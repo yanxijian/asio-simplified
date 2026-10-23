@@ -1,0 +1,12 @@
+asio-simplified
+Copyright (c) 2026 yanxijian
+
+The file LICENSE_1_0.txt contains the Boost Software License 1.0.
+
+The test harness and several test cases under tests/asio are adapted from
+Asio (https://github.com/chriskohlhoff/asio), Copyright (c) 2003-2026
+Christopher M. Kohlhoff, and are used under the Boost Software License 1.0.
+The adapted files keep their original copyright headers.
+
+asio-simplified is an independent study project. It is not affiliated with,
+endorsed by, or sponsored by the Asio project or its author.
