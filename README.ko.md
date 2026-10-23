@@ -2,12 +2,13 @@
 
 **한국어** · [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md)
 
-<!-- translated-from: README.md sha256:b24cf5376bc3 -->
-
+[![CI](https://github.com/yanxijian/asio-simplified/actions/workflows/ci.yml/badge.svg)](https://github.com/yanxijian/asio-simplified/actions/workflows/ci.yml)
 [![License: BSL-1.0](https://img.shields.io/badge/License-BSL--1.0-blue.svg)](LICENSE_1_0.txt)
 [![C++](https://img.shields.io/badge/C%2B%2B-17%20%2F%2020-blue.svg)]()
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)]()
 [![Status: educational](https://img.shields.io/badge/Status-educational-orange.svg)]()
+
+<!-- translated-from: README.md sha256:664a0fbdd14d -->
 
 비동기 I/O 라이브러리가 어떻게 동작하는지 공부하기 위한
 [Asio](https://github.com/chriskohlhoff/asio)의 작고 읽기 쉬운 부분 집합입니다.

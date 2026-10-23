@@ -1,0 +1,36 @@
+# Rules that do not need a compiler: encoding/BOM/line endings, README
+# languages and translations, links, badges and action versions.
+#
+# This runs on every push and pull request, including documentation-only ones,
+# which is why it is separate from ci.yml: that workflow filters on build inputs.
+
+name: hygiene
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hygiene-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repo-rules:
+    name: repo-rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check repository rules
+        run: python3 scripts/repo_rules.py check --config repo-rules.json
+      - uses: actions/checkout@v7
+        with:
+          repository: yanxijian/RepoRules
+          path: .repo-rules
+      - name: Check vendored checker is current
+        run: python3 .repo-rules/repo_rules.py sync --root . --hook --check

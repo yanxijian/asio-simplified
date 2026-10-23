@@ -2,6 +2,7 @@
 
 **English** · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
 
+[![CI](https://github.com/yanxijian/asio-simplified/actions/workflows/ci.yml/badge.svg)](https://github.com/yanxijian/asio-simplified/actions/workflows/ci.yml)
 [![License: BSL-1.0](https://img.shields.io/badge/License-BSL--1.0-blue.svg)](LICENSE_1_0.txt)
 [![C++](https://img.shields.io/badge/C%2B%2B-17%20%2F%2020-blue.svg)]()
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)]()

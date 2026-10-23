@@ -1,0 +1,14 @@
+# Repository text policy: LF by default. C/C++ sources keep their bytes
+# (UTF-8 with BOM + CRLF) because the project targets MSVC on Windows.
+* text=auto eol=lf
+
+*.c    -text -eol
+*.cc   -text -eol
+*.cpp  -text -eol
+*.cxx  -text -eol
+*.h    -text -eol
+*.hh   -text -eol
+*.hpp  -text -eol
+*.hxx  -text -eol
+*.bat  -text -eol
+*.cmd  -text -eol

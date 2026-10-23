@@ -2,12 +2,13 @@
 
 **简体中文** · [English](README.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
 
-<!-- translated-from: README.md sha256:b24cf5376bc3 -->
-
+[![CI](https://github.com/yanxijian/asio-simplified/actions/workflows/ci.yml/badge.svg)](https://github.com/yanxijian/asio-simplified/actions/workflows/ci.yml)
 [![License: BSL-1.0](https://img.shields.io/badge/License-BSL--1.0-blue.svg)](LICENSE_1_0.txt)
 [![C++](https://img.shields.io/badge/C%2B%2B-17%20%2F%2020-blue.svg)]()
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)]()
 [![Status: educational](https://img.shields.io/badge/Status-educational-orange.svg)]()
+
+<!-- translated-from: README.md sha256:664a0fbdd14d -->
 
 [Asio](https://github.com/chriskohlhoff/asio) 的一个小而可读的子集，用来学习异步 I/O 库是如何工作的。
 

@@ -1,0 +1,43 @@
+# Build and test the library on Windows. Only build inputs trigger this
+# workflow; documentation and script changes are covered by hygiene.yml.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+    paths: &build_inputs
+      - CMakeLists.txt
+      - include/**
+      - src/**
+      - tests/**
+      - examples/**
+      - .github/workflows/ci.yml
+  pull_request:
+    branches: [main]
+    paths: *build_inputs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: windows-msvc
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configure
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        run: cmake --build build --config Debug
+
+      - name: Test
+        run: ctest --test-dir build -C Debug --output-on-failure
