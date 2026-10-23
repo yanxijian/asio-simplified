@@ -4,7 +4,7 @@
 直接读它，第一道坎不是模型，而是平台分支、模板层次和 C++03 兼容代码。
 
 `sasio` 是同一套**设计思想**的极小实现：只做 Windows、只保留主干，`include/` + `src/`
-约 3000 行，并且**文件名、类名、分层都与 asio 对齐**，可以左右对照着读。
+约 3600 行，并且**文件名、类名、分层都与 asio 对齐**，可以左右对照着读。
 
 它不是 asio 的替代品，也不追求 API 兼容；它是 asio 的**伴读代码**。
 
@@ -23,7 +23,9 @@
 | `include/sasio/ip/tcp.hpp` | `ip/tcp.hpp`、`basic_stream_socket.hpp`、`basic_socket_acceptor.hpp` | IPv4 TCP：`endpoint`、`socket`、`acceptor`、`no_delay` |
 | `include/sasio/strand.hpp` | `strand.hpp`、`detail/strand_service.hpp` | 串行化 handler：`post`/`dispatch`/`running_in_this_thread` |
 | `include/sasio/read.hpp`、`write.hpp` | `read.hpp`、`write.hpp`、`detail/read_op.hpp` | 组合操作：把一个 buffer 读满 / 写空，内部循环 `*_some` |
-| `include/sasio/error.hpp` | `error.hpp` | `error_code`、`operation_aborted`、`would_block`、`already_started`、`eof` |
+| `include/sasio/ip/udp.hpp` | `ip/udp.hpp`、`basic_datagram_socket.hpp` | UDP：`async_send_to` / `async_receive_from` |
+| `include/sasio/ip/resolver.hpp` | `ip/basic_resolver.hpp` | `getaddrinfo` 同步解析 + 每查询一个工作线程的异步解析 |
+| `include/sasio/error.hpp` | `error.hpp` | `error_code`、`operation_aborted`、`would_block`、`already_started`、`eof`、resolver 错误类别 |
 
 ## 三个核心概念
 
@@ -110,6 +112,21 @@ socket 成员槽位代替。
 
 这是 asio 里 `composed_op` + 关联分配器做的事情的最小版本。
 
+### 7. resolver 与 UDP
+
+`resolver` 同步版直接调用 `getaddrinfo`，失败映射到独立的 `resolver` 错误类别
+（`gai_strerrorA` 的消息）。异步版为每次查询起一个短命线程，结果通过 `post` 回到
+io_context；线程期间持有一个 work 单位，所以 `run()` 不会提前返回。`cancel()` 只影响
+最近一次查询——asio 用一个常驻线程池和完整的取消队列，这里刻意简化。
+
+两个由此而来的使用约束：`cancel()` 只对它尚未完成的查询生效，一旦 `getaddrinfo` 返回，
+结果照常投递（与 asio 对已完成操作的处理一致）；解析线程是 detach 的，因此 **io_context
+必须比所有未完成的 `async_resolve` 活得久**，不要在不调用 `run()` 的情况下直接销毁它。
+
+UDP 与 TCP 共用同一套 reactor 注册表，只是系统调用换成 `sendto`/`recvfrom`，并且完成时
+把发送方地址写回调用方提供的 `endpoint&`。`udp::endpoint` 直接复用 `tcp::endpoint`：
+IPv4 地址/端口对在两种协议下是同一个东西。
+
 ## 目录
 
 ```
@@ -117,7 +134,7 @@ simplified/
   include/sasio/      公开头文件（对照 asio 的同名头）
   src/                实现
   examples/           ex01_post、ex02_timer、ex03_echo_server
-  tests/asio/         移植自 asio 自带测试：unit_test.hpp、io_context、steady_timer、ip_tcp、strand、read、write
+  tests/asio/         移植自 asio 自带测试：unit_test.hpp、io_context、steady_timer、ip_tcp、strand、read、write、ip_udp、resolver
 ```
 
 ## 构建与运行
@@ -145,6 +162,8 @@ build\ex03_echo_server.exe 5555
 | `ip_tcp.cpp` | `ip/tcp.cpp` + `examples/cpp11/echo/async_tcp_echo_server.cpp` | `no_delay` 断言来自 `ip_tcp_runtime::test`；echo/cancel 用例来自示例（asio 没有这一层的运行时单测） |
 | `strand.cpp` | `strand.cpp` | 保留 `strand_test` 的嵌套 dispatch、异常后仍可继续、孤儿 strand 断言；多线程串行与顺序用例按同样思路补上 |
 | `read.cpp`、`write.cpp` | `read.cpp`、`write.cpp` | 保留 `test_3_arg_*_async_*` 的部分读写用例；`test_stream.hpp` 也是从这两个文件里的同名辅助类移植的 |
+| `ip_udp.cpp` | `examples/cpp11/echo/async_udp_echo_server.cpp` | asio 的 `ip/udp.cpp` 只查 API 面，因此改成 loopback 数据报回声用例 |
+| `resolver.cpp` | `ip/basic_resolver.cpp`（仅参考断言风格） | asio 的 resolver 测试依赖 service 与 handler archetype；这里验证文档行为：`localhost` 解析出回环地址 |
 
 关于 `ip_tcp.cpp` 需要说明：asio 的 `src/tests/unit/ip/tcp.cpp` 主要是 API 面与选项的检查，
 **没有覆盖真实的 accept/read/write 行为**（那部分靠 `examples/` 和 `latency`/`performance`）。
@@ -189,7 +208,10 @@ build\ex03_echo_server.exe 5555
 | `strand` 是绑定 io_context 的对象，不是 executor 适配器 | asio 的 `strand<Executor>` 需要 executor 体系；这里保留串行语义，砍掉 `bind_executor` |
 | 组合操作只接受单个 buffer | asio 支持 buffer 序列、streambuf、完成条件（`transfer_at_least` 等）；这里够用即可 |
 | 没有 `async_read_until` | 它需要动态缓冲和分隔符搜索，留作练习 |
-| 没有 resolver、SSL、协程 | 后续章节 |
+| resolver 每查询起一个线程，取消只作用于最近一次 | asio 有常驻线程池和完整取消队列 |
+| `udp::endpoint` 复用 `tcp::endpoint` | 同一套 IPv4 地址/端口表示，省掉重复类型 |
+| 没有 connected UDP / `send`/`receive` 重载 | 只保留 `send_to`/`receive_from`，够教学用 |
+| 没有 SSL、协程 | 后续章节 |
 
 ## 阅读顺序建议
 
@@ -203,7 +225,8 @@ build\ex03_echo_server.exe 5555
 8. `ip/tcp.hpp` 的 `async_read_some`：发起函数只存状态 + 注册，`do_read` 才做系统调用；
 9. `src/ip_tcp.cpp` 的 `do_accept` / `do_connect`：对照 asio 的 `*_op` 状态机；
 10. `strand.cpp`：一个队列 + 一个 `running` 标志如何实现 asio 的串行契约；
-11. `read.hpp` / `write.hpp`：组合操作如何用 `shared_ptr` 状态串起多次 `*_some`。
+11. `read.hpp` / `write.hpp`：组合操作如何用 `shared_ptr` 状态串起多次 `*_some`；
+12. `ip/udp.hpp` 与 `ip/resolver.hpp`：同一套 reactor 如何复用到数据报与域名解析。
 
 ## 路线图
 
@@ -213,6 +236,6 @@ build\ex03_echo_server.exe 5555
 | 2（完成） | `socket`、`acceptor`、`socket_ops` | `basic_socket.hpp`、`detail/socket_ops` |
 | 3（完成） | `strand` 与多线程 `run()` | `strand.hpp`、`detail/strand_service.hpp` |
 | 4（完成） | 组合操作 `async_read`/`async_write` | `read.hpp`、`write.hpp`、`detail/read_op` |
-| 5 | `resolver`、UDP | `ip/basic_resolver.hpp` |
+| 5（完成） | `resolver`、UDP | `ip/basic_resolver.hpp`、`ip/udp.hpp` |
 | 6（可选） | C++20 `awaitable` + `co_spawn` | `awaitable.hpp`、`co_spawn.hpp` |
 | 附录（可选） | 最小 IOCP 版本 | `detail/win_iocp_*` |

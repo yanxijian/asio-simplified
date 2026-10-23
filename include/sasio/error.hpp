@@ -69,6 +69,31 @@ inline const std::error_category& sasio_category()
 
 inline const error_code eof(1, sasio_category());
 
+// getaddrinfo() reports its own error numbers (EAI_*), which are not Win32
+// errors and therefore need a separate category.
+class resolver_error_category : public std::error_category
+{
+public:
+  const char* name() const noexcept override { return "resolver"; }
+
+  std::string message(int value) const override
+  {
+    const char* text = ::gai_strerrorA(value);
+    return text ? text : "resolver error";
+  }
+};
+
+inline const std::error_category& resolver_category()
+{
+  static const resolver_error_category category;
+  return category;
+}
+
+inline error_code resolver_error(int value)
+{
+  return error_code(value, resolver_category());
+}
+
 // Winsock reports Win32 error numbers, so they belong to the system category.
 // asio hides the same mapping inside asio::error::get_system_category().
 inline error_code last_socket_error()

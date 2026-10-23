@@ -14,6 +14,8 @@ add_library(sasio STATIC
   src/steady_timer.cpp
   src/socket_ops.cpp
   src/ip_tcp.cpp
+  src/ip_udp.cpp
+  src/resolver.cpp
   src/strand.cpp
 )
 
@@ -70,6 +72,14 @@ add_executable(test_write tests/asio/write.cpp)
 target_include_directories(test_write PRIVATE tests/asio)
 target_link_libraries(test_write PRIVATE sasio)
 
+add_executable(test_ip_udp tests/asio/ip_udp.cpp)
+target_include_directories(test_ip_udp PRIVATE tests/asio)
+target_link_libraries(test_ip_udp PRIVATE sasio)
+
+add_executable(test_resolver tests/asio/resolver.cpp)
+target_include_directories(test_resolver PRIVATE tests/asio)
+target_link_libraries(test_resolver PRIVATE sasio)
+
 if (MSVC)
   target_compile_options(test_io_context PRIVATE /W4 /permissive-)
   target_compile_options(test_steady_timer PRIVATE /W4 /permissive-)
@@ -77,6 +87,8 @@ if (MSVC)
   target_compile_options(test_strand PRIVATE /W4 /permissive-)
   target_compile_options(test_read PRIVATE /W4 /permissive-)
   target_compile_options(test_write PRIVATE /W4 /permissive-)
+  target_compile_options(test_ip_udp PRIVATE /W4 /permissive-)
+  target_compile_options(test_resolver PRIVATE /W4 /permissive-)
 endif()
 
 add_test(NAME asio_io_context COMMAND test_io_context)
@@ -85,3 +97,5 @@ add_test(NAME asio_ip_tcp COMMAND test_ip_tcp)
 add_test(NAME asio_strand COMMAND test_strand)
 add_test(NAME asio_read COMMAND test_read)
 add_test(NAME asio_write COMMAND test_write)
+add_test(NAME asio_ip_udp COMMAND test_ip_udp)
+add_test(NAME asio_resolver COMMAND test_resolver)

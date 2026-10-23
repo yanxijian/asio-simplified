@@ -20,6 +20,7 @@ namespace detail {
 namespace socket_ops {
 
 SOCKET create_stream_socket(error_code& ec);
+SOCKET create_datagram_socket(error_code& ec);
 bool set_non_blocking(SOCKET descriptor, error_code& ec);
 bool set_reuse_address(SOCKET descriptor, bool value, error_code& ec);
 
@@ -37,6 +38,10 @@ int recv_socket(SOCKET descriptor, void* data, std::size_t size,
     error_code& ec);
 int send_socket(SOCKET descriptor, const void* data, std::size_t size,
     error_code& ec);
+int recv_from_socket(SOCKET descriptor, void* data, std::size_t size,
+    sockaddr_in& address, error_code& ec);
+int send_to_socket(SOCKET descriptor, const void* data, std::size_t size,
+    const sockaddr_in& address, error_code& ec);
 
 bool shutdown_socket(SOCKET descriptor, int how, error_code& ec);
 

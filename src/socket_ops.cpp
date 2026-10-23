@@ -48,6 +48,16 @@ SOCKET create_stream_socket(error_code& ec)
   return result;
 }
 
+SOCKET create_datagram_socket(error_code& ec)
+{
+  const SOCKET result = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (result == INVALID_SOCKET)
+    ec = last_socket_error();
+  else
+    ec.clear();
+  return result;
+}
+
 bool set_non_blocking(SOCKET descriptor, error_code& ec)
 {
   u_long non_blocking = 1;
@@ -109,6 +119,33 @@ int send_socket(SOCKET descriptor, const void* data, std::size_t size,
 {
   const int result = ::send(descriptor, static_cast<const char*>(data),
       static_cast<int>(size), 0);
+  if (result == SOCKET_ERROR)
+    ec = make_error(::WSAGetLastError());
+  else
+    ec.clear();
+  return result;
+}
+
+int recv_from_socket(SOCKET descriptor, void* data, std::size_t size,
+    sockaddr_in& address, error_code& ec)
+{
+  int length = sizeof(address);
+  const int result = ::recvfrom(descriptor, static_cast<char*>(data),
+      static_cast<int>(size), 0,
+      reinterpret_cast<sockaddr*>(&address), &length);
+  if (result == SOCKET_ERROR)
+    ec = make_error(::WSAGetLastError());
+  else
+    ec.clear();
+  return result;
+}
+
+int send_to_socket(SOCKET descriptor, const void* data, std::size_t size,
+    const sockaddr_in& address, error_code& ec)
+{
+  const int result = ::sendto(descriptor, static_cast<const char*>(data),
+      static_cast<int>(size), 0,
+      reinterpret_cast<const sockaddr*>(&address), sizeof(address));
   if (result == SOCKET_ERROR)
     ec = make_error(::WSAGetLastError());
   else
