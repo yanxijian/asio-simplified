@@ -180,6 +180,17 @@
       ],
       "switch_line": true,
       "stale": "warning"
+    },
+    "translations": {
+      "pairs": [
+        [
+          "docs/zh/executor-and-tokens.md",
+          "docs/en/executor-and-tokens.md"
+        ]
+      ],
+      "marker": "translated-from:",
+      "stale": "warning",
+      "untracked": true
     }
   },
   "gitattributes": {

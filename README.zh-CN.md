@@ -8,7 +8,7 @@
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)]()
 [![Status: educational](https://img.shields.io/badge/Status-educational-orange.svg)]()
 
-<!-- translated-from: README.md sha256:664a0fbdd14d -->
+<!-- translated-from: README.md sha256:a3133feac6eb -->
 
 [Asio](https://github.com/chriskohlhoff/asio) 的一个小而可读的子集，用来学习异步 I/O 库是如何工作的。
 
@@ -64,6 +64,7 @@ ctest --test-dir build --output-on-failure
 build\ex01_post.exe
 build\ex02_timer.exe
 build\ex03_echo_server.exe 5555
+build\ex04_bind_executor.exe
 ```
 
 ## 测试
@@ -84,6 +85,10 @@ Debug CRT 断言被改成立即失败，坏掉的不变量不可能靠点一次�
 - resolver 每次查询起一个短命线程；`io_context` 必须比未完成的查询活得久。
 - 对象不是线程安全的：不要在另一个线程 `close()` 正在等待的 socket。
 - 不是 Asio 的 drop-in 替代品，也不面向生产环境。
+
+executor 关联与 completion token 是刻意省略的。[Executor 与 completion token](docs/zh/executor-and-tokens.md)
+解释它们解决什么问题、缺了它们的代价，以及 `examples/ex04_bind_executor.cpp` 如何用 `strand` 手工近似
+`bind_executor`。
 
 ## 阅读顺序
 

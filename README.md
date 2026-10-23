@@ -69,6 +69,7 @@ Examples:
 build\ex01_post.exe
 build\ex02_timer.exe
 build\ex03_echo_server.exe 5555
+build\ex04_bind_executor.exe
 ```
 
 ## Tests
@@ -92,6 +93,11 @@ dismissed with an "Ignore" button and still report success.
   queries.
 - Objects are not thread-safe: do not `close()` a socket from another thread while it is waiting.
 - Not a drop-in replacement for Asio, and not intended for production.
+
+Executor association and completion tokens are deliberately absent.
+[Executor and completion tokens](docs/en/executor-and-tokens.md) explains what
+they solve, what their absence costs, and how `examples/ex04_bind_executor.cpp`
+approximates `bind_executor` with a `strand`.
 
 ## Reading order
 

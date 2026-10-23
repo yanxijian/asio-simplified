@@ -8,7 +8,7 @@
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)]()
 [![Status: educational](https://img.shields.io/badge/Status-educational-orange.svg)]()
 
-<!-- translated-from: README.md sha256:664a0fbdd14d -->
+<!-- translated-from: README.md sha256:a3133feac6eb -->
 
 非同期 I/O ライブラリがどのように動くかを学ぶための、[Asio](https://github.com/chriskohlhoff/asio)
 の小さくて読めるサブセットです。
@@ -70,6 +70,7 @@ ctest --test-dir build --output-on-failure
 build\ex01_post.exe
 build\ex02_timer.exe
 build\ex03_echo_server.exe 5555
+build\ex04_bind_executor.exe
 ```
 
 ## テスト
@@ -94,6 +95,10 @@ Debug CRT のアサーションは即時失敗に変えてあります。壊れ�
 - オブジェクトはスレッド安全ではありません。待機中のソケットを別スレッドから `close()` しないで
   ください。
 - Asio の drop-in 代替ではなく、製品利用も想定していません。
+
+エグゼキューターの関連付けと完了トークンは意図的に省いています。
+[Executor と完了トークン](docs/en/executor-and-tokens.md) で、それらが解く問題、欠けているコスト、
+`examples/ex04_bind_executor.cpp` が `strand` で `bind_executor` をどう近似するかを説明しています。
 
 ## 読む順序
 

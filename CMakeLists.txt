@@ -45,6 +45,12 @@ if (MSVC)
   target_compile_options(ex03_echo_server PRIVATE /W4 /permissive-)
 endif()
 
+add_executable(ex04_bind_executor examples/ex04_bind_executor.cpp)
+target_link_libraries(ex04_bind_executor PRIVATE sasio)
+if (MSVC)
+  target_compile_options(ex04_bind_executor PRIVATE /W4 /permissive-)
+endif()
+
 enable_testing()
 
 # The test sources are adapted from asio's own test suite; see tests/asio/.

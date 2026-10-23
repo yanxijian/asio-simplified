@@ -8,7 +8,7 @@
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)]()
 [![Status: educational](https://img.shields.io/badge/Status-educational-orange.svg)]()
 
-<!-- translated-from: README.md sha256:664a0fbdd14d -->
+<!-- translated-from: README.md sha256:a3133feac6eb -->
 
 비동기 I/O 라이브러리가 어떻게 동작하는지 공부하기 위한
 [Asio](https://github.com/chriskohlhoff/asio)의 작고 읽기 쉬운 부분 집합입니다.
@@ -71,6 +71,7 @@ ctest --test-dir build --output-on-failure
 build\ex01_post.exe
 build\ex02_timer.exe
 build\ex03_echo_server.exe 5555
+build\ex04_bind_executor.exe
 ```
 
 ## 테스트
@@ -94,6 +95,10 @@ Debug CRT 어서션은 즉시 실패로 바꾸었습니다. 깨진 불변 조건
   살아 있어야 합니다.
 - 객체는 스레드 안전하지 않습니다. 대기 중인 소켓을 다른 스레드에서 `close()`하지 마세요.
 - Asio의 drop-in 대체가 아니며 실제 제품용도 아닙니다.
+
+실행자 연결과 완료 토큰은 의도적으로 생략했습니다.
+[Executor와 완료 토큰](docs/en/executor-and-tokens.md)에서 이들이 해결하는 문제, 빠졌을 때의 비용,
+`examples/ex04_bind_executor.cpp`가 `strand`로 `bind_executor`를 어떻게 근사하는지 설명합니다.
 
 ## 읽는 순서
 
