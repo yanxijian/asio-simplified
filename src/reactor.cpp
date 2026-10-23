@@ -4,6 +4,7 @@
 
 #include <climits>
 #include <system_error>
+#include <utility>
 
 namespace sasio {
 namespace {
@@ -46,6 +47,10 @@ reactor::~reactor()
 
 void reactor::shutdown()
 {
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    descriptors_.clear();
+  }
   close_interrupter();
 
   if (winsock_initialised_)
@@ -128,21 +133,115 @@ void reactor::interrupt()
   }
 }
 
+bool reactor::idle() const
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  return descriptors_.empty();
+}
+
+void reactor::start_read(SOCKET descriptor, std::function<void()> handler)
+{
+  bool first = false;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    descriptor_state& state = descriptors_[descriptor];
+    first = !state.read_handler;
+    state.read_handler = std::move(handler);
+  }
+
+  // A thread already blocked in WSAPoll() is waiting on a snapshot of the
+  // descriptor set taken before this registration, so it must be woken up to
+  // rebuild that set. asio does exactly this in
+  // select_reactor::start_unready_op():
+  //   if (first) interrupter_.interrupt();
+  if (first)
+    interrupt();
+}
+
+void reactor::stop_read(SOCKET descriptor)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  const auto it = descriptors_.find(descriptor);
+  if (it == descriptors_.end())
+    return;
+
+  it->second.read_handler = nullptr;
+  if (it->second.empty())
+    descriptors_.erase(it);
+}
+
+void reactor::start_write(SOCKET descriptor, std::function<void()> handler)
+{
+  bool first = false;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    descriptor_state& state = descriptors_[descriptor];
+    first = !state.write_handler;
+    state.write_handler = std::move(handler);
+  }
+
+  // See start_read(): the poll set is a snapshot, so new interest must wake a
+  // thread that is already waiting in WSAPoll().
+  if (first)
+    interrupt();
+}
+
+void reactor::stop_write(SOCKET descriptor)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  const auto it = descriptors_.find(descriptor);
+  if (it == descriptors_.end())
+    return;
+
+  it->second.write_handler = nullptr;
+  if (it->second.empty())
+    descriptors_.erase(it);
+}
+
+void reactor::close_descriptor(SOCKET descriptor)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  descriptors_.erase(descriptor);
+}
+
 void reactor::run_for(clock::duration timeout)
 {
   if (interrupter_ == INVALID_SOCKET)
-  {
-    // Context is shutting down. Sleep instead of spinning: the scheduler will
-    // see the stop flag as soon as it can run again.
     return;
+
+  std::vector<WSAPOLLFD> poll_fds;
+  std::vector<SOCKET> polled_sockets;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    poll_fds.reserve(descriptors_.size() + 1);
+    polled_sockets.reserve(descriptors_.size());
+
+    for (const auto& entry : descriptors_)
+    {
+      const descriptor_state& state = entry.second;
+      WSAPOLLFD poll_fd = {};
+      poll_fd.fd = entry.first;
+      poll_fd.events = 0;
+      if (state.read_handler)
+        poll_fd.events |= POLLRDNORM;
+      if (state.write_handler)
+        poll_fd.events |= POLLWRNORM;
+      if (poll_fd.events == 0)
+        continue;
+
+      poll_fds.push_back(poll_fd);
+      polled_sockets.push_back(entry.first);
+    }
+
+    WSAPOLLFD interrupt_fd = {};
+    interrupt_fd.fd = interrupter_;
+    interrupt_fd.events = POLLRDNORM;
+    poll_fds.push_back(interrupt_fd);
   }
 
-  WSAPOLLFD descriptor = {};
-  descriptor.fd = interrupter_;
-  descriptor.events = POLLRDNORM;
-  descriptor.revents = 0;
-
-  const int result = ::WSAPoll(&descriptor, 1, to_milliseconds(timeout));
+  const int result =
+      ::WSAPoll(poll_fds.data(), static_cast<ULONG>(poll_fds.size()),
+          to_milliseconds(timeout));
 
   if (result == SOCKET_ERROR)
   {
@@ -152,7 +251,48 @@ void reactor::run_for(clock::duration timeout)
     throw std::system_error(error, "WSAPoll() failed");
   }
 
-  if (result > 0 && (descriptor.revents & POLLRDNORM) != 0)
+  // Collect the handlers whose descriptors are ready, then run them with no
+  // lock held. A handler is moved out of the table so that a level-triggered
+  // poll cannot deliver the same readiness twice.
+  std::vector<std::function<void()>> ready_handlers;
+  if (result > 0)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (std::size_t i = 0; i < polled_sockets.size(); ++i)
+    {
+      const short revents = poll_fds[i].revents;
+      if (revents == 0)
+        continue;
+
+      const auto it = descriptors_.find(polled_sockets[i]);
+      if (it == descriptors_.end())
+        continue;
+
+      descriptor_state& state = it->second;
+      const bool error_or_hangup =
+          (revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
+
+      if (state.read_handler && (error_or_hangup || (revents & POLLRDNORM)))
+      {
+        ready_handlers.push_back(std::move(state.read_handler));
+        state.read_handler = nullptr;
+      }
+
+      if (state.write_handler && (error_or_hangup || (revents & POLLWRNORM)))
+      {
+        ready_handlers.push_back(std::move(state.write_handler));
+        state.write_handler = nullptr;
+      }
+
+      if (state.empty())
+        descriptors_.erase(it);
+    }
+  }
+
+  for (auto& handler : ready_handlers)
+    handler();
+
+  if (result > 0 && (poll_fds.back().revents & POLLRDNORM) != 0)
   {
     char buffer[64];
     while (::recv(interrupter_, buffer, sizeof(buffer), 0) > 0)

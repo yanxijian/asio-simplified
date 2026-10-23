@@ -4,21 +4,24 @@
 直接读它，第一道坎不是模型，而是平台分支、模板层次和 C++03 兼容代码。
 
 `sasio` 是同一套**设计思想**的极小实现：只做 Windows、只保留主干，`include/` + `src/`
-约 1300 行，并且**文件名、类名、分层都与 asio 对齐**，可以左右对照着读。
+约 2500 行，并且**文件名、类名、分层都与 asio 对齐**，可以左右对照着读。
 
 它不是 asio 的替代品，也不追求 API 兼容；它是 asio 的**伴读代码**。
 
-## 已实现（第 1 章）
+## 已实现（第 1、2 章）
 
 | sasio | 对应 asio | 说明 |
 | --- | --- | --- |
 | `include/sasio/execution_context.hpp` | `execution_context.hpp` + `detail/service_registry.hpp` | 服务注册表：`io_context` 只负责创建/查找服务 |
 | `include/sasio/io_context.hpp` | `io_context.hpp` | 门面：`post`/`dispatch`/`run`/`poll`/`stop` + `work` 守卫 |
 | `include/sasio/scheduler.hpp` | `detail/scheduler.hpp`、`detail/scheduler_operation.hpp` | handler 队列、work 计数、`run` 主循环 |
-| `include/sasio/reactor.hpp` | `detail/select_reactor.hpp`、`detail/epoll_reactor.hpp` | WSAPoll 就绪等待 + interrupter 唤醒 |
+| `include/sasio/reactor.hpp` | `detail/select_reactor.hpp`、`detail/epoll_reactor.hpp` | WSAPoll 就绪等待、描述符注册表 + interrupter 唤醒 |
 | `include/sasio/timer_queue.hpp` | `detail/timer_queue.hpp` | 定时器最小堆 |
 | `include/sasio/steady_timer.hpp` | `steady_timer.hpp`、`basic_waitable_timer.hpp` | 定时器对象，`expires_after` / `async_wait` / `cancel` |
-| `include/sasio/error.hpp` | `error.hpp` | `error_code`、`operation_aborted` |
+| `include/sasio/buffer.hpp` | `buffer.hpp` | `mutable_buffer` / `const_buffer` 与 `buffer()` 辅助函数 |
+| `include/sasio/detail/socket_ops.hpp` | `detail/socket_ops.hpp`（4308 行） | Winsock 薄封装：create/bind/listen/accept/connect/recv/send/shutdown |
+| `include/sasio/ip/tcp.hpp` | `ip/tcp.hpp`、`basic_stream_socket.hpp`、`basic_socket_acceptor.hpp` | IPv4 TCP：`endpoint`、`socket`、`acceptor`、`no_delay` |
+| `include/sasio/error.hpp` | `error.hpp` | `error_code`、`operation_aborted`、`would_block`、`already_started` |
 
 ## 三个核心概念
 
@@ -66,14 +69,28 @@ Windows 上 asio 用 IOCP（真 proactor）；POSIX 上它用 reactor 模拟 pro
 （`if (earliest/first) interrupter_.interrupt()`）——没有这一步，多线程 `run()` 时从另一个
 线程发起的操作会一直睡到下一次 `post` 才被看见。
 
+### 4. socket 操作也是「注册 → 就绪 → 执行 → 投递完成」
+
+`async_read_some` 不会读数据，它只做三件事：把 buffer/handler 存进 socket、向 reactor 注册
+「读就绪」、返回。reactor 报告可读后，`socket::do_read()` 才真正 `recv`，然后把完成 handler
+`post` 到调度器。写、accept、connect 完全同构。
+
+这条链路和 asio 的 `reactive_socket_recv_op` 一一对应：**你写下的 `async_xxx` 只是描述
+「就绪后做什么」，真正的系统调用发生在 reactor 通知之后**。它也解释了 asio 为什么要
+operation 对象：注册、取消、完成都需要一个能活到事件发生时的状态载体；这里直接用
+socket 成员槽位代替。
+
+第 2 章还给 reactor 增加了描述符注册表：`start_read` / `start_write` / `stop_*` 与
+`close_descriptor`。定时器仍然不经过描述符，由调度器算超时。
+
 ## 目录
 
 ```
 simplified/
   include/sasio/      公开头文件（对照 asio 的同名头）
   src/                实现
-  examples/           ex01_post（post 链）、ex02_timer（循环定时器）
-  tests/asio/         移植自 asio 自带测试（unit_test.hpp、io_context、steady_timer）
+  examples/           ex01_post、ex02_timer、ex03_echo_server
+  tests/asio/         移植自 asio 自带测试：unit_test.hpp、io_context、steady_timer、ip_tcp
 ```
 
 ## 构建与运行
@@ -86,6 +103,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 build\ex01_post.exe
 build\ex02_timer.exe
+build\ex03_echo_server.exe 5555
 ```
 
 ## 测试：来自 asio 自己的测试套件
@@ -97,6 +115,11 @@ build\ex02_timer.exe
 | `unit_test.hpp` | `unit_test.hpp` | 保留 `ASIO_CHECK`/`ASIO_TEST_SUITE`/`ASIO_TEST_CASE` 宏名，改成 `sasio` 名字空间、去掉平台分支 |
 | `io_context.cpp` | `io_context.cpp` | 保留 `io_context_test` 的全部断言与注释；`executor_work_guard` → `io_context::work`，`post/dispatch` 改成员调用 |
 | `steady_timer.cpp` | `deadline_timer.cpp` | `deadline_timer` + `posix_time` → `steady_timer` + `std::chrono`；保留到期、链式、取消的断言 |
+| `ip_tcp.cpp` | `ip/tcp.cpp` + `examples/cpp11/echo/async_tcp_echo_server.cpp` | `no_delay` 断言来自 `ip_tcp_runtime::test`；echo/cancel 用例来自示例（asio 没有这一层的运行时单测） |
+
+关于 `ip_tcp.cpp` 需要说明：asio 的 `src/tests/unit/ip/tcp.cpp` 主要是 API 面与选项的检查，
+**没有覆盖真实的 accept/read/write 行为**（那部分靠 `examples/` 和 `latency`/`performance`）。
+所以第 2 章的 echo 与 cancel 用例是照 `async_tcp_echo_server.cpp` 改写的，文件头写明了来源。
 
 省略的部分都在文件里标了 `OMITTED` 并注明原因，主要是第 1 章没有的能力：
 
@@ -121,29 +144,38 @@ build\ex02_timer.exe
 | 只支持 Windows + WSAPoll | 教学范围；asio 有 8 套后端 |
 | 没有模板 executor / `any_io_executor` | 这层是 asio 最重的机械结构，不影响主模型 |
 | handler 统一为 `std::function` | 保留「发起函数 → 操作 → 完成」主干，去掉 completion token 分派 |
+| socket/acceptor 不是线程安全的：不要从另一个线程 `close()` 正在等待的 socket | 与 asio 的约束相同；asio 靠 operation 对象缓解，这里没有跨线程状态保护 |
 | 没有 `scheduler_operation` 对象 | asio 把 handler、分配器、执行器和 work 单位绑在一个 operation 里；这里用「`std::function` + `handler_work` RAII 计数」得到同样的可观察行为 |
 | 定时器不单独占 work 单位 | asio 的每个 wait op 都持有一个 work 单位；这里用「定时器堆非空」等价地阻止 `run()` 退出 |
 | 超时由 scheduler 计算 | asio 把定时器队列注册给 reactor，由 reactor 算 poll 超时 |
 | 一个定时器只允许一个挂起 wait | asio 允许多个；简化后不必维护 wait 列表 |
 | 计时器析构时投递 `operation_aborted` | 与 asio 的取消语义一致；asio 在对象析构路径上细节更多 |
 | 取消的完成 handler 通过 `post` 投递 | 与 asio 一致，保证不在 `cancel()` 内部重入 |
-| 没有 `strand`、socket、resolver、SSL、协程 | 后续章节 |
+| 只实现 IPv4 + TCP，无 `resolver` | 第 5 章再补；需要域名时先用 `getaddrinfo` 自己解析 |
+| 每个方向只允许一个未完成操作 | asio 用 operation 队列支持更多重载；这里用 `already_started` 明确拒绝 |
+| `socket` 不可移动、`async_accept(socket&, handler)` | 省掉 move 语义与 asio 的 `async_accept()` 返回 socket 重载 |
+| 没有组合操作 `async_read`/`async_write` | 第 4 章；示例里的写循环暂时手写 |
+| socket 选项只有 `no_delay` | `reuse_address` 在 acceptor 内部固定打开；其余选项留作练习 |
+| 没有 `strand`、resolver、SSL、协程 | 后续章节 |
 
 ## 阅读顺序建议
 
 1. `execution_context.hpp`：先看服务注册表，理解 `io_context` 为什么这么薄；
 2. `io_context.hpp` → `io_context.cpp`：只看转发，几乎没有逻辑；
 3. `scheduler.cpp` 的 `run_one_impl`：全库最重要的 60 行；
-4. `reactor.cpp`：interrupter 与 `WSAPoll`，理解「唤醒」；
+4. `reactor.cpp`：interrupter、`WSAPoll`、描述符注册表，理解「唤醒」与「就绪」；
 5. `timer_queue.cpp`：最小堆，理解「超时」；
-6. `steady_timer.cpp`：一个对象如何把 wait 注册进队列、取消时如何投递完成。
+6. `steady_timer.cpp`：一个对象如何把 wait 注册进队列、取消时如何投递完成；
+7. `detail/socket_ops.hpp`：所有 Winsock 调用只出现在这一层；
+8. `ip/tcp.hpp` 的 `async_read_some`：发起函数只存状态 + 注册，`do_read` 才做系统调用；
+9. `src/ip_tcp.cpp` 的 `do_accept` / `do_connect`：对照 asio 的 `*_op` 状态机。
 
 ## 路线图
 
 | 章节 | 内容 | asio 对照 |
 | --- | --- | --- |
 | 1（完成） | io_context、scheduler、reactor、timer | `detail/scheduler`、`detail/select_reactor`、`detail/timer_queue` |
-| 2 | `basic_stream_socket`、`acceptor`、`socket_ops` | `basic_socket.hpp`、`detail/socket_ops`（4308 行 → 约 400 行） |
+| 2（完成） | `socket`、`acceptor`、`socket_ops` | `basic_socket.hpp`、`detail/socket_ops` |
 | 3 | `strand` 与多线程 `run()` | `strand.hpp`、`detail/strand_service.hpp` |
 | 4 | 组合操作 `async_read`/`async_write` | `read.hpp`、`write.hpp`、`detail/read_op` |
 | 5 | `resolver`、UDP | `ip/basic_resolver.hpp` |
