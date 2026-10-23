@@ -4,7 +4,7 @@
 直接读它，第一道坎不是模型，而是平台分支、模板层次和 C++03 兼容代码。
 
 `sasio` 是同一套**设计思想**的极小实现：只做 Windows、只保留主干，`include/` + `src/`
-约 2500 行，并且**文件名、类名、分层都与 asio 对齐**，可以左右对照着读。
+约 2800 行，并且**文件名、类名、分层都与 asio 对齐**，可以左右对照着读。
 
 它不是 asio 的替代品，也不追求 API 兼容；它是 asio 的**伴读代码**。
 
@@ -21,6 +21,7 @@
 | `include/sasio/buffer.hpp` | `buffer.hpp` | `mutable_buffer` / `const_buffer` 与 `buffer()` 辅助函数 |
 | `include/sasio/detail/socket_ops.hpp` | `detail/socket_ops.hpp`（4308 行） | Winsock 薄封装：create/bind/listen/accept/connect/recv/send/shutdown |
 | `include/sasio/ip/tcp.hpp` | `ip/tcp.hpp`、`basic_stream_socket.hpp`、`basic_socket_acceptor.hpp` | IPv4 TCP：`endpoint`、`socket`、`acceptor`、`no_delay` |
+| `include/sasio/strand.hpp` | `strand.hpp`、`detail/strand_service.hpp` | 串行化 handler：`post`/`dispatch`/`running_in_this_thread` |
 | `include/sasio/error.hpp` | `error.hpp` | `error_code`、`operation_aborted`、`would_block`、`already_started` |
 
 ## 三个核心概念
@@ -83,6 +84,20 @@ socket 成员槽位代替。
 第 2 章还给 reactor 增加了描述符注册表：`start_read` / `start_write` / `stop_*` 与
 `close_descriptor`。定时器仍然不经过描述符，由调度器算超时。
 
+### 5. strand 把「多线程 run()」变成串行
+
+`run()` 可以被多个线程同时调用，此时不同 handler 会并发执行——这正是 asio 需要 strand 的原因。
+
+`sasio::strand` 内部是一个共享的队列 + `running` 标志：
+
+- `post()` 入队；如果 strand 空闲，就向调度器投递一个「排空」handler；
+- 排空循环每次取一个 handler 执行，执行期间新投递的 handler 只入队，由同一个循环接着跑；
+- `dispatch()` 在 strand 内部时直接就地执行（与 asio 的嵌套语义一致），在外部且 strand
+  空闲时也允许就地接管；
+- 一个 handler 抛异常不能把 strand 永久锁住：释放 `running`，把剩余 handler 重新投递。
+
+它保证的是 asio 的两条契约：**同一 strand 的 handler 不并发，且 `post` 的顺序不变**。
+
 ## 目录
 
 ```
@@ -90,7 +105,7 @@ simplified/
   include/sasio/      公开头文件（对照 asio 的同名头）
   src/                实现
   examples/           ex01_post、ex02_timer、ex03_echo_server
-  tests/asio/         移植自 asio 自带测试：unit_test.hpp、io_context、steady_timer、ip_tcp
+  tests/asio/         移植自 asio 自带测试：unit_test.hpp、io_context、steady_timer、ip_tcp、strand
 ```
 
 ## 构建与运行
@@ -116,6 +131,7 @@ build\ex03_echo_server.exe 5555
 | `io_context.cpp` | `io_context.cpp` | 保留 `io_context_test` 的全部断言与注释；`executor_work_guard` → `io_context::work`，`post/dispatch` 改成员调用 |
 | `steady_timer.cpp` | `deadline_timer.cpp` | `deadline_timer` + `posix_time` → `steady_timer` + `std::chrono`；保留到期、链式、取消的断言 |
 | `ip_tcp.cpp` | `ip/tcp.cpp` + `examples/cpp11/echo/async_tcp_echo_server.cpp` | `no_delay` 断言来自 `ip_tcp_runtime::test`；echo/cancel 用例来自示例（asio 没有这一层的运行时单测） |
+| `strand.cpp` | `strand.cpp` | 保留 `strand_test` 的嵌套 dispatch、异常后仍可继续、孤儿 strand 断言；多线程串行与顺序用例按同样思路补上 |
 
 关于 `ip_tcp.cpp` 需要说明：asio 的 `src/tests/unit/ip/tcp.cpp` 主要是 API 面与选项的检查，
 **没有覆盖真实的 accept/read/write 行为**（那部分靠 `examples/` 和 `latency`/`performance`）。
@@ -125,7 +141,8 @@ build\ex03_echo_server.exe 5555
 
 - 同步 `wait()`、`cancel_one()`、一个定时器多个挂起 wait；
 - `bind_executor`、自定义 executor、allocator、completion token、timer 移动语义；
-- `deadline_timer_custom_allocation_test` / `_thread_test` / `_async_result_test` / `_move_test`。
+- `deadline_timer_custom_allocation_test` / `_thread_test` / `_async_result_test` / `_move_test`；
+- `strand_conversion_test` / `strand_query_test` / `strand_execute_test`（需要 executor 转换、`query`/`prefer` 与 `execute`）。
 
 另外把原来的秒级等待缩短到几百毫秒，检查结构不变。
 
@@ -156,7 +173,8 @@ build\ex03_echo_server.exe 5555
 | `socket` 不可移动、`async_accept(socket&, handler)` | 省掉 move 语义与 asio 的 `async_accept()` 返回 socket 重载 |
 | 没有组合操作 `async_read`/`async_write` | 第 4 章；示例里的写循环暂时手写 |
 | socket 选项只有 `no_delay` | `reuse_address` 在 acceptor 内部固定打开；其余选项留作练习 |
-| 没有 `strand`、resolver、SSL、协程 | 后续章节 |
+| `strand` 是绑定 io_context 的对象，不是 executor 适配器 | asio 的 `strand<Executor>` 需要 executor 体系；这里保留串行语义，砍掉 `bind_executor` |
+| 没有 resolver、SSL、协程 | 后续章节 |
 
 ## 阅读顺序建议
 
@@ -168,7 +186,8 @@ build\ex03_echo_server.exe 5555
 6. `steady_timer.cpp`：一个对象如何把 wait 注册进队列、取消时如何投递完成；
 7. `detail/socket_ops.hpp`：所有 Winsock 调用只出现在这一层；
 8. `ip/tcp.hpp` 的 `async_read_some`：发起函数只存状态 + 注册，`do_read` 才做系统调用；
-9. `src/ip_tcp.cpp` 的 `do_accept` / `do_connect`：对照 asio 的 `*_op` 状态机。
+9. `src/ip_tcp.cpp` 的 `do_accept` / `do_connect`：对照 asio 的 `*_op` 状态机；
+10. `strand.cpp`：一个队列 + 一个 `running` 标志如何实现 asio 的串行契约。
 
 ## 路线图
 
@@ -176,7 +195,7 @@ build\ex03_echo_server.exe 5555
 | --- | --- | --- |
 | 1（完成） | io_context、scheduler、reactor、timer | `detail/scheduler`、`detail/select_reactor`、`detail/timer_queue` |
 | 2（完成） | `socket`、`acceptor`、`socket_ops` | `basic_socket.hpp`、`detail/socket_ops` |
-| 3 | `strand` 与多线程 `run()` | `strand.hpp`、`detail/strand_service.hpp` |
+| 3（完成） | `strand` 与多线程 `run()` | `strand.hpp`、`detail/strand_service.hpp` |
 | 4 | 组合操作 `async_read`/`async_write` | `read.hpp`、`write.hpp`、`detail/read_op` |
 | 5 | `resolver`、UDP | `ip/basic_resolver.hpp` |
 | 6（可选） | C++20 `awaitable` + `co_spawn` | `awaitable.hpp`、`co_spawn.hpp` |
