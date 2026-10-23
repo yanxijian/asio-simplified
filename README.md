@@ -4,7 +4,7 @@
 直接读它，第一道坎不是模型，而是平台分支、模板层次和 C++03 兼容代码。
 
 `sasio` 是同一套**设计思想**的极小实现：只做 Windows、只保留主干，`include/` + `src/`
-约 3600 行，并且**文件名、类名、分层都与 asio 对齐**，可以左右对照着读。
+约 4100 行，并且**文件名、类名、分层都与 asio 对齐**，可以左右对照着读。
 
 它不是 asio 的替代品，也不追求 API 兼容；它是 asio 的**伴读代码**。
 
@@ -25,6 +25,7 @@
 | `include/sasio/read.hpp`、`write.hpp` | `read.hpp`、`write.hpp`、`detail/read_op.hpp` | 组合操作：把一个 buffer 读满 / 写空，内部循环 `*_some` |
 | `include/sasio/ip/udp.hpp` | `ip/udp.hpp`、`basic_datagram_socket.hpp` | UDP：`async_send_to` / `async_receive_from` |
 | `include/sasio/ip/resolver.hpp` | `ip/basic_resolver.hpp` | `getaddrinfo` 同步解析 + 每查询一个工作线程的异步解析 |
+| `include/sasio/awaitable.hpp`、`co_spawn.hpp` | `awaitable.hpp`、`co_spawn.hpp`、`use_awaitable.hpp` | C++20 协程：`awaitable<T>`、`co_spawn`、`async_*` 适配器 |
 | `include/sasio/error.hpp` | `error.hpp` | `error_code`、`operation_aborted`、`would_block`、`already_started`、`eof`、resolver 错误类别 |
 
 ## 三个核心概念
@@ -127,6 +128,26 @@ UDP 与 TCP 共用同一套 reactor 注册表，只是系统调用换成 `sendto
 把发送方地址写回调用方提供的 `endpoint&`。`udp::endpoint` 直接复用 `tcp::endpoint`：
 IPv4 地址/端口对在两种协议下是同一个东西。
 
+### 8. 协程：把回调写成直线代码
+
+`awaitable<T>` 是一个持有协程句柄的任务类型。关键点只有三个：
+
+- `initial_suspend` 挂起，句柄由 `awaitable` 持有，`co_spawn` 调用 `resume()` 启动；
+- 被 `co_await` 时，把等待者的句柄记进 promise 的 `continuation`，结束时用
+  **symmetric transfer** 交还控制权；
+- 顶层协程（`co_spawn` 启动的）在 `final_suspend` 不再挂起，帧自动销毁，
+  promise 的析构函数调用完成 handler——返回值或异常都在这里交出。
+
+`async_operation<T>` 把「回调式操作」桥接成 awaitable：它把当前协程的句柄存下来，
+在回调里 `resume()`。`co_spawn.hpp` 里的 `async_wait` / `async_read_some` /
+`async_write_some` / `async_accept` / `async_connect` 都是这么来的。
+
+asio 的 `use_awaitable` 是完成令牌，需要 `async_result` 体系；这里换成显式的自由函数
+适配器，语义相同，代码量少一个数量级。
+
+`operator co_await() &&` 只接受右值：`awaitable` 拥有协程帧，具名任务要写成
+`co_await std::move(task)`。这与 asio 的 move-only 所有权语义一致，但值得提前知道。
+
 ## 目录
 
 ```
@@ -134,7 +155,7 @@ simplified/
   include/sasio/      公开头文件（对照 asio 的同名头）
   src/                实现
   examples/           ex01_post、ex02_timer、ex03_echo_server
-  tests/asio/         移植自 asio 自带测试：unit_test.hpp、io_context、steady_timer、ip_tcp、strand、read、write、ip_udp、resolver
+  tests/asio/         移植自 asio 自带测试：unit_test.hpp、io_context、steady_timer、ip_tcp、strand、read、write、ip_udp、resolver、coroutine
 ```
 
 ## 构建与运行
@@ -164,6 +185,7 @@ build\ex03_echo_server.exe 5555
 | `read.cpp`、`write.cpp` | `read.cpp`、`write.cpp` | 保留 `test_3_arg_*_async_*` 的部分读写用例；`test_stream.hpp` 也是从这两个文件里的同名辅助类移植的 |
 | `ip_udp.cpp` | `examples/cpp11/echo/async_udp_echo_server.cpp` | asio 的 `ip/udp.cpp` 只查 API 面，因此改成 loopback 数据报回声用例 |
 | `resolver.cpp` | `ip/basic_resolver.cpp`（仅参考断言风格） | asio 的 resolver 测试依赖 service 与 handler archetype；这里验证文档行为：`localhost` 解析出回环地址 |
+| `coroutine.cpp` | `co_spawn.cpp` / `awaitable.cpp`（仅参考模型） | asio 的协程测试围绕 completion token；这里验证 `co_spawn` 的返回值/异常、定时器挂起、socket 直线会话 |
 
 关于 `ip_tcp.cpp` 需要说明：asio 的 `src/tests/unit/ip/tcp.cpp` 主要是 API 面与选项的检查，
 **没有覆盖真实的 accept/read/write 行为**（那部分靠 `examples/` 和 `latency`/`performance`）。
@@ -211,7 +233,8 @@ build\ex03_echo_server.exe 5555
 | resolver 每查询起一个线程，取消只作用于最近一次 | asio 有常驻线程池和完整取消队列 |
 | `udp::endpoint` 复用 `tcp::endpoint` | 同一套 IPv4 地址/端口表示，省掉重复类型 |
 | 没有 connected UDP / `send`/`receive` 重载 | 只保留 `send_to`/`receive_from`，够教学用 |
-| 没有 SSL、协程 | 后续章节 |
+| 协程用自由函数适配器，不是 `use_awaitable` 令牌 | 令牌需要 `async_result` 体系；`awaitable<T>` 也没有 executor |
+| 没有 SSL | 留给读者：`ssl::stream` 的核心也是 socket + 回调 |
 
 ## 阅读顺序建议
 
@@ -226,7 +249,8 @@ build\ex03_echo_server.exe 5555
 9. `src/ip_tcp.cpp` 的 `do_accept` / `do_connect`：对照 asio 的 `*_op` 状态机；
 10. `strand.cpp`：一个队列 + 一个 `running` 标志如何实现 asio 的串行契约；
 11. `read.hpp` / `write.hpp`：组合操作如何用 `shared_ptr` 状态串起多次 `*_some`；
-12. `ip/udp.hpp` 与 `ip/resolver.hpp`：同一套 reactor 如何复用到数据报与域名解析。
+12. `ip/udp.hpp` 与 `ip/resolver.hpp`：同一套 reactor 如何复用到数据报与域名解析；
+13. `awaitable.hpp` 的 `final_suspend` 与 `co_spawn.hpp` 的适配器：协程如何接回回调世界。
 
 ## 路线图
 
@@ -237,5 +261,5 @@ build\ex03_echo_server.exe 5555
 | 3（完成） | `strand` 与多线程 `run()` | `strand.hpp`、`detail/strand_service.hpp` |
 | 4（完成） | 组合操作 `async_read`/`async_write` | `read.hpp`、`write.hpp`、`detail/read_op` |
 | 5（完成） | `resolver`、UDP | `ip/basic_resolver.hpp`、`ip/udp.hpp` |
-| 6（可选） | C++20 `awaitable` + `co_spawn` | `awaitable.hpp`、`co_spawn.hpp` |
-| 附录（可选） | 最小 IOCP 版本 | `detail/win_iocp_*` |
+| 6（完成） | C++20 `awaitable` + `co_spawn` | `awaitable.hpp`、`co_spawn.hpp` |
+| 附录（可选，未做） | 最小 IOCP 版本 | `detail/win_iocp_*` |

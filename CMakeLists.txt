@@ -80,6 +80,14 @@ add_executable(test_resolver tests/asio/resolver.cpp)
 target_include_directories(test_resolver PRIVATE tests/asio)
 target_link_libraries(test_resolver PRIVATE sasio)
 
+# Chapter 6 needs C++20 coroutines; the rest of the library stays on C++17.
+add_executable(test_coroutine tests/asio/coroutine.cpp)
+set_target_properties(test_coroutine PROPERTIES
+  CXX_STANDARD 20
+  CXX_STANDARD_REQUIRED ON)
+target_include_directories(test_coroutine PRIVATE tests/asio)
+target_link_libraries(test_coroutine PRIVATE sasio)
+
 if (MSVC)
   target_compile_options(test_io_context PRIVATE /W4 /permissive-)
   target_compile_options(test_steady_timer PRIVATE /W4 /permissive-)
@@ -89,6 +97,7 @@ if (MSVC)
   target_compile_options(test_write PRIVATE /W4 /permissive-)
   target_compile_options(test_ip_udp PRIVATE /W4 /permissive-)
   target_compile_options(test_resolver PRIVATE /W4 /permissive-)
+  target_compile_options(test_coroutine PRIVATE /W4 /permissive-)
 endif()
 
 add_test(NAME asio_io_context COMMAND test_io_context)
@@ -99,3 +108,4 @@ add_test(NAME asio_read COMMAND test_read)
 add_test(NAME asio_write COMMAND test_write)
 add_test(NAME asio_ip_udp COMMAND test_ip_udp)
 add_test(NAME asio_resolver COMMAND test_resolver)
+add_test(NAME asio_coroutine COMMAND test_coroutine)
