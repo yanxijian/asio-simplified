@@ -4,7 +4,7 @@
 直接读它，第一道坎不是模型，而是平台分支、模板层次和 C++03 兼容代码。
 
 `sasio` 是同一套**设计思想**的极小实现：只做 Windows、只保留主干，`include/` + `src/`
-约 2800 行，并且**文件名、类名、分层都与 asio 对齐**，可以左右对照着读。
+约 3000 行，并且**文件名、类名、分层都与 asio 对齐**，可以左右对照着读。
 
 它不是 asio 的替代品，也不追求 API 兼容；它是 asio 的**伴读代码**。
 
@@ -22,7 +22,8 @@
 | `include/sasio/detail/socket_ops.hpp` | `detail/socket_ops.hpp`（4308 行） | Winsock 薄封装：create/bind/listen/accept/connect/recv/send/shutdown |
 | `include/sasio/ip/tcp.hpp` | `ip/tcp.hpp`、`basic_stream_socket.hpp`、`basic_socket_acceptor.hpp` | IPv4 TCP：`endpoint`、`socket`、`acceptor`、`no_delay` |
 | `include/sasio/strand.hpp` | `strand.hpp`、`detail/strand_service.hpp` | 串行化 handler：`post`/`dispatch`/`running_in_this_thread` |
-| `include/sasio/error.hpp` | `error.hpp` | `error_code`、`operation_aborted`、`would_block`、`already_started` |
+| `include/sasio/read.hpp`、`write.hpp` | `read.hpp`、`write.hpp`、`detail/read_op.hpp` | 组合操作：把一个 buffer 读满 / 写空，内部循环 `*_some` |
+| `include/sasio/error.hpp` | `error.hpp` | `error_code`、`operation_aborted`、`would_block`、`already_started`、`eof` |
 
 ## 三个核心概念
 
@@ -98,6 +99,17 @@ socket 成员槽位代替。
 
 它保证的是 asio 的两条契约：**同一 strand 的 handler 不并发，且 `post` 的顺序不变**。
 
+### 6. 组合操作：操作套操作
+
+`async_read` / `async_write` 自己不做 I/O，它们反复调用 `async_read_some` / `async_write_some`，
+直到 buffer 满/空、出错或对端关闭。`sasio` 用一个小状态机（`detail::read_op`、`write_op`）实现：
+
+- 状态对象由 `shared_ptr` 持有，并被每次完成 handler 捕获，于是它恰好活到整条操作链结束；
+- 部分读/写由 `transferred_` 计数推进，下一轮只传剩余区间；
+- 对端提前关闭时，`read` 以 `sasio::eof` 完成——对应 asio 的 `asio::error::eof`。
+
+这是 asio 里 `composed_op` + 关联分配器做的事情的最小版本。
+
 ## 目录
 
 ```
@@ -105,7 +117,7 @@ simplified/
   include/sasio/      公开头文件（对照 asio 的同名头）
   src/                实现
   examples/           ex01_post、ex02_timer、ex03_echo_server
-  tests/asio/         移植自 asio 自带测试：unit_test.hpp、io_context、steady_timer、ip_tcp、strand
+  tests/asio/         移植自 asio 自带测试：unit_test.hpp、io_context、steady_timer、ip_tcp、strand、read、write
 ```
 
 ## 构建与运行
@@ -132,6 +144,7 @@ build\ex03_echo_server.exe 5555
 | `steady_timer.cpp` | `deadline_timer.cpp` | `deadline_timer` + `posix_time` → `steady_timer` + `std::chrono`；保留到期、链式、取消的断言 |
 | `ip_tcp.cpp` | `ip/tcp.cpp` + `examples/cpp11/echo/async_tcp_echo_server.cpp` | `no_delay` 断言来自 `ip_tcp_runtime::test`；echo/cancel 用例来自示例（asio 没有这一层的运行时单测） |
 | `strand.cpp` | `strand.cpp` | 保留 `strand_test` 的嵌套 dispatch、异常后仍可继续、孤儿 strand 断言；多线程串行与顺序用例按同样思路补上 |
+| `read.cpp`、`write.cpp` | `read.cpp`、`write.cpp` | 保留 `test_3_arg_*_async_*` 的部分读写用例；`test_stream.hpp` 也是从这两个文件里的同名辅助类移植的 |
 
 关于 `ip_tcp.cpp` 需要说明：asio 的 `src/tests/unit/ip/tcp.cpp` 主要是 API 面与选项的检查，
 **没有覆盖真实的 accept/read/write 行为**（那部分靠 `examples/` 和 `latency`/`performance`）。
@@ -174,6 +187,8 @@ build\ex03_echo_server.exe 5555
 | 没有组合操作 `async_read`/`async_write` | 第 4 章；示例里的写循环暂时手写 |
 | socket 选项只有 `no_delay` | `reuse_address` 在 acceptor 内部固定打开；其余选项留作练习 |
 | `strand` 是绑定 io_context 的对象，不是 executor 适配器 | asio 的 `strand<Executor>` 需要 executor 体系；这里保留串行语义，砍掉 `bind_executor` |
+| 组合操作只接受单个 buffer | asio 支持 buffer 序列、streambuf、完成条件（`transfer_at_least` 等）；这里够用即可 |
+| 没有 `async_read_until` | 它需要动态缓冲和分隔符搜索，留作练习 |
 | 没有 resolver、SSL、协程 | 后续章节 |
 
 ## 阅读顺序建议
@@ -187,7 +202,8 @@ build\ex03_echo_server.exe 5555
 7. `detail/socket_ops.hpp`：所有 Winsock 调用只出现在这一层；
 8. `ip/tcp.hpp` 的 `async_read_some`：发起函数只存状态 + 注册，`do_read` 才做系统调用；
 9. `src/ip_tcp.cpp` 的 `do_accept` / `do_connect`：对照 asio 的 `*_op` 状态机；
-10. `strand.cpp`：一个队列 + 一个 `running` 标志如何实现 asio 的串行契约。
+10. `strand.cpp`：一个队列 + 一个 `running` 标志如何实现 asio 的串行契约；
+11. `read.hpp` / `write.hpp`：组合操作如何用 `shared_ptr` 状态串起多次 `*_some`。
 
 ## 路线图
 
@@ -196,7 +212,7 @@ build\ex03_echo_server.exe 5555
 | 1（完成） | io_context、scheduler、reactor、timer | `detail/scheduler`、`detail/select_reactor`、`detail/timer_queue` |
 | 2（完成） | `socket`、`acceptor`、`socket_ops` | `basic_socket.hpp`、`detail/socket_ops` |
 | 3（完成） | `strand` 与多线程 `run()` | `strand.hpp`、`detail/strand_service.hpp` |
-| 4 | 组合操作 `async_read`/`async_write` | `read.hpp`、`write.hpp`、`detail/read_op` |
+| 4（完成） | 组合操作 `async_read`/`async_write` | `read.hpp`、`write.hpp`、`detail/read_op` |
 | 5 | `resolver`、UDP | `ip/basic_resolver.hpp` |
 | 6（可选） | C++20 `awaitable` + `co_spawn` | `awaitable.hpp`、`co_spawn.hpp` |
 | 附录（可选） | 最小 IOCP 版本 | `detail/win_iocp_*` |

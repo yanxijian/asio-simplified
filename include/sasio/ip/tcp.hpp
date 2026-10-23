@@ -126,6 +126,10 @@ public:
 
   SOCKET native_handle() const { return handle_; }
 
+  // Used by composed operations to post a completion even when they have no
+  // asynchronous operation of their own to start (for example an empty buffer).
+  io_context& context() const { return context_; }
+
 private:
   friend class acceptor;
 

@@ -18,7 +18,9 @@
 #include "sasio/buffer.hpp"
 #include "sasio/io_context.hpp"
 #include "sasio/ip/tcp.hpp"
+#include "sasio/read.hpp"
 #include "sasio/steady_timer.hpp"
+#include "sasio/write.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -302,6 +304,74 @@ void tcp_read_cancel_test()
   ASIO_CHECK(read_result == operation_aborted);
 }
 
+//------------------------------------------------------------------------------
+// Composed operations: async_read/async_write over a real loopback connection.
+// The setup is the same echo pattern as above, but both sides use the composed
+// operations from chapter 4 instead of the *_some primitives.
+
+void tcp_composed_test()
+{
+  io_context ioc;
+
+  ip::tcp::acceptor acceptor(ioc, ip::tcp::endpoint(INADDR_LOOPBACK, 0));
+  const unsigned short port = acceptor.local_endpoint().port();
+
+  ip::tcp::socket server_socket(ioc);
+  ip::tcp::socket client_socket(ioc);
+
+  char server_buffer[5] = {};
+  char client_buffer[5] = {};
+  bool echoed = false;
+
+  steady_timer watchdog(ioc);
+  watchdog.expires_after(std::chrono::seconds(5));
+  watchdog.async_wait([&ioc](error_code) { ioc.stop(); });
+
+  acceptor.async_accept(server_socket, [&](error_code ec) {
+    ASIO_CHECK(!ec);
+    if (ec)
+      return;
+
+    async_read(server_socket, buffer(server_buffer),
+        [&](error_code read_ec, std::size_t length) {
+          ASIO_CHECK(!read_ec);
+          ASIO_CHECK(length == sizeof(server_buffer));
+
+          async_write(server_socket, buffer(server_buffer, length),
+              [](error_code write_ec, std::size_t written) {
+                ASIO_CHECK(!write_ec);
+                ASIO_CHECK(written == sizeof(server_buffer));
+              });
+        });
+  });
+
+  client_socket.async_connect(ip::tcp::endpoint(INADDR_LOOPBACK, port),
+      [&](error_code ec) {
+        ASIO_CHECK(!ec);
+        if (ec)
+          return;
+
+        async_write(client_socket, buffer("hello", 5),
+            [&](error_code write_ec, std::size_t written) {
+              ASIO_CHECK(!write_ec);
+              ASIO_CHECK(written == 5);
+
+              async_read(client_socket, buffer(client_buffer),
+                  [&](error_code read_ec, std::size_t length) {
+                    ASIO_CHECK(!read_ec);
+                    ASIO_CHECK(length == sizeof(client_buffer));
+                    echoed = std::memcmp(client_buffer, "hello", 5) == 0;
+                    ioc.stop();
+                  });
+            });
+      });
+
+  ioc.run();
+  watchdog.cancel();
+
+  ASIO_CHECK(echoed);
+}
+
 ASIO_TEST_SUITE
 (
   "ip_tcp",
@@ -310,4 +380,5 @@ ASIO_TEST_SUITE
   ASIO_TEST_CASE(tcp_echo_test)
   ASIO_TEST_CASE(tcp_cancel_test)
   ASIO_TEST_CASE(tcp_read_cancel_test)
+  ASIO_TEST_CASE(tcp_composed_test)
 )

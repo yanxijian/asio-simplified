@@ -14,6 +14,7 @@
 
 #include "config.hpp"
 
+#include <string>
 #include <system_error>
 
 namespace sasio {
@@ -39,6 +40,34 @@ inline const error_code already_started =
 // Returned when a socket operation is attempted on a closed socket.
 inline const error_code bad_descriptor =
     std::make_error_code(std::errc::bad_file_descriptor);
+
+// asio has its own error category for errors that do not come from the OS.
+// The composed read operation uses it for "the stream ended before the buffer
+// was filled", which asio spells asio::error::eof.
+class sasio_error_category : public std::error_category
+{
+public:
+  const char* name() const noexcept override { return "sasio"; }
+
+  std::string message(int value) const override
+  {
+    switch (value)
+    {
+    case 1:
+      return "eof";
+    default:
+      return "sasio error";
+    }
+  }
+};
+
+inline const std::error_category& sasio_category()
+{
+  static const sasio_error_category category;
+  return category;
+}
+
+inline const error_code eof(1, sasio_category());
 
 // Winsock reports Win32 error numbers, so they belong to the system category.
 // asio hides the same mapping inside asio::error::get_system_category().
