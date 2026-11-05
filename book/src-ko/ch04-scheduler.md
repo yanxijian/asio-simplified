@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch04-scheduler.md sha256:1feee4a767fd -->
+<!-- translated-from: book/src/ch04-scheduler.md sha256:2eec44ad32d0 -->
 
 # scheduler: handler 큐와 워크 카운트
 
@@ -73,11 +73,11 @@ public:
 };
 ```
 
-이 객체가 살아 있는 기간 = work 단위가 장부에 남아 있는 기간입니다 — asio의
+이 객체가 살아 있는 기간 = work 단위가 카운트에 남아 있는 기간입니다 — asio의
 `work_cleanup` 역할입니다. `handler_work`와 `invoke`를 조합하면: handler에서
 예외가 나가도 스택 풀기 동안 `handler_work`의 소멸자는 여전히 실행되고, 카운트는
 정확히 감소합니다; 예외는 계속 위로 날아가 `run()` 밖으로 나갑니다. 이것이
-asio의 행동입니다: **예외는 호출자의 것, 기장은 프레임워크의 것**.
+asio의 행동입니다: **예외는 호출자의 것, 카운트는 프레임워크의 것**.
 
 ## 정독: run_one_impl 전문
 
@@ -145,7 +145,7 @@ true를 반환하는 것은 "이번 주기에 한 단위의 일을 했다"는 �
 `while (run_one_impl(block)) ++count;` 카운팅 셸입니다.
 
 `handler_work`가 여기서 생성됩니다 — 디큐 순간부터 이 handler의 work 단위는
-장부에 남아 있고, 실행이 끝나면(예외 포함) 소멸자가 해제합니다. 불변식 1,
+카운트에 남아 있고, 실행이 끝나면(예외 포함) 소멸자가 해제합니다. 불변식 1,
 여기서 실현됩니다.
 
 **단계 2: 큐가 비었을 때 — 타이머를 본다.**
@@ -251,7 +251,7 @@ return work_count_ != 0 || !queue_.empty() || !timers_.empty()
 | --- | --- | --- |
 | 루프 본체 | `detail/impl/scheduler.ipp`의 `do_run_one()` | `src/scheduler.cpp`의 `run_one_impl()` |
 | work 카운트 | `outstanding_work_` | `work_count_` |
-| 실행 시 기장 | operation의 `work_cleanup` | `handler_work` RAII |
+| 실행 시 카운트 | operation의 `work_cleanup` | `handler_work` RAII |
 | 즉시 완료 | `post_immediate_completion()` | 직접 `post` |
 | 정지 조건 | `outstanding_work_ == 0`(구축 시 미계상 옵션) | 네 조건(타이머와 descriptor 포함) |
 | 가드 | `executor_work_guard` | `io_context::work` |

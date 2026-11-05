@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch07-socket.md sha256:83de2cf578b7 -->
+<!-- translated-from: book/src/ch07-socket.md sha256:bd7c0e04fd3b -->
 
 # socket: 발기 함수는 "준비되면 할 일"만 기술한다
 
@@ -110,7 +110,7 @@ void socket::do_read()
 }
 ```
 
-여기가 `recv`의 집입니다. 세 가지 출구:
+여기가 `recv`의 실제 구현 위치입니다. 세 가지 출구:
 
 - **거짓 경보**: poll은 읽을 수 있다고 했지만, `recv`가 `would_block`을
   반환합니다(검사와 호출 사이의 창에서 데이터가 사라졌거나, poll의 레벨
@@ -129,7 +129,7 @@ void socket::do_read()
 
 ## 2개의 비대칭: connect와 close
 
-**connect에는 마침표가 없으며, 3 상태가 있습니다**. 발기 함수
+**connect에는 동기의 끝이 없으며, 3 상태가 있습니다**. 발기 함수
 `start_connect`는 비블로킹 `connect`를 직접 호출합니다:
 
 - 즉시 성공(루프백에서 흔함): `complete_connect(빈 오류 코드)`;

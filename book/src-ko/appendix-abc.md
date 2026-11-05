@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/appendix-abc.md sha256:b70095ed69ae -->
+<!-- translated-from: book/src/appendix-abc.md sha256:9634cbc50de5 -->
 
 # 부록 A: 용어집
 
@@ -7,14 +7,14 @@
 
 | 용어 | 한 문장 정의 |
 | --- | --- |
-| synchronous call | 반환하면 결과가 손안에 있음. 함수 반환은 마침표 |
+| synchronous call | 반환하면 결과가 손안에 있음. 함수 반환은 끝이다 |
 | reactor | 커널은 "누가 준비되었는가"만 보고하고, 프레임이 I/O를 직접 수행(select/poll/epoll/WSAPoll) |
 | proactor | I/O를 커널이 수행하고, 콜백이 받는 것은 결과 그 자체(Windows IOCP) |
 | handler | 비동기 연산의 완료 함수. 결과 또는 오류를 가지고 있음 |
 | initiating function | 발기 함수(`async_read_some` 등). 등록만 하고 실행하지 않음 |
 | `io_context` | 서비스 컨테이너 + `run()` 루프의 호스트 |
 | service | context에 걸린 엔진 부품(scheduler, reactor, timer queue) |
-| work(단위) | "아직 할 일이 있다"의 기장 단위. 카운트 0과 3개의 대기원이 모두 비면 stop |
+| work(단위) | "아직 할 일이 있다"의 카운트 단위. 카운트 0과 3개의 대기원이 모두 비면 stop |
 | work guard | `io_context::work` / `executor_work_guard` — 의도적으로 유지하는 work 단위 |
 | op_queue / operation | asio의 만능 봉투: handler + 할당자 + work + 취소 상태의 힙 위 객체 |
 | completion signature | 완료 시그니처. `void(error_code, size_t)`처럼 handler의 형태를 결정 |

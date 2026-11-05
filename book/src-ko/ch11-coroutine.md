@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch11-coroutine.md sha256:67c19c8bed8d -->
+<!-- translated-from: book/src/ch11-coroutine.md sha256:4f5457477a98 -->
 
 # coroutine: 콜백을 직선 코드로
 
@@ -194,7 +194,7 @@ struct final_awaiter
 이유는? 톱 레벨에는 대기자가 없습니다 — completion 외에, 그 존재를 아는
 사람은 없습니다. 아무도 다시 resume하러 오지 않는 coroutine을 서스펜드시켜 두는
 것은, 프레임을 1개 누출하는 것입니다. "서스펜드하지 않음 → 파괴 → 소멸자가
-결과를 인도"로, 누출의 구멍을 용접으로 막았습니다.
+결과를 인도"로, 누출 경로를 완전히 차단했습니다.
 
 ## 대조표
 

@@ -1,10 +1,10 @@
-<!-- translated-from: book/src/ch09-udp-resolver.md sha256:a27814c9337f -->
+<!-- translated-from: book/src/ch09-udp-resolver.md sha256:16a0cc61db85 -->
 
 # UDP와 resolver: 하나의 엔진, 두 가지 재활용
 
 엔진의 3대 부품이 자리를 잡았고 TCP의 2상식이 세워졌으므로, 사용 가능한
 네트워크 라이브러리의 골격은 이미 완성되었습니다. 이 장은 일상적인 마지막 2개의
-퍼즐 조각을 맞춥니다. 각각이 고유한 교훈을 가지고 있습니다:
+컴포넌트를 맞춥니다. 각각이 고유한 교훈을 가지고 있습니다:
 
 **UDP**는 시스템 콜을 교체합니다(`sendto` / `recvfrom`)만, **엔진에는 거의
 손을 대지 않습니다** — 같은 descriptor 테이블, 같은 `WSAPoll`, 같은 "등록,
@@ -147,7 +147,7 @@ void resolver::start_resolve(const query& q,
    값으로 lambda에 캡처되어, 큐에 던져집니다;
 5. **work는 post된 lambda 위에서 돌아옵니다**. `release` 가드의 소멸자는
    handler가 실행된 **후**에 발화합니다 — 해결 중에도(handler가 큐에서 대기하는
-   동안도 포함하여) work 단위는 장부에 남아 있고, handler가 실행을 마친 후에야
+   동안도 포함하여) work 단위는 카운트에 남아 있고, handler가 실행을 마친 후에야
    해방됩니다. 예외에서도 누출되지 않습니다. RAII의 고전 기법으로, 제4장
    `handler_work`의 크로스스레드 사촌입니다.
 
@@ -215,7 +215,7 @@ ctx.run();
 아직 끝나지 않은 동안에, 다음 `async_receive_from`이 이미 등록되어 있어서,
 두 번째 데이터그램이 전송 중인 내용을 덮어씁니다. 송신마다 자신의 복사본을
 만들고, lambda가 `shared_ptr`로 생존을 유지하며, 송신이 완료되면(handler의
-파괴) 해방됩니다. 이 손이 낯익습니까? 제8장 `write_op`의 릴레이 배턴,
+파괴) 해방됩니다. 이 기법은 제8장과 같은 계보입니다. 제8장 `write_op`의 릴레이 배턴,
 포켓판입니다.
 
 **버그 사냥**: 2개의 타이밍 — `aborted`는 각각 무엇이 됩니까?

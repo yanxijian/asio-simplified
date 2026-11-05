@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch03-services.md sha256:966ab72561e0 -->
+<!-- translated-from: book/src/ch03-services.md sha256:ac6cca903afe -->
 
 # io_context가 왜 이렇게 얇은가: 서비스 레지스트리
 
@@ -205,6 +205,6 @@ ctx.run();   // prints handlers: 1
 
 서비스 컨테이너가 갖춰졌고, 첫 서비스인 scheduler도 이미 자리에 있습니다.
 하지만 지금까지는 "큐 안의 handler가 run()에 의해 실행된다"고 말했을 뿐 — run
-루프의 전문, work 카운트의 기장 규칙, "할 일이 없음"의 정확한 판정은 아직
+루프의 전문, work 카운트 규칙, "할 일이 없음"의 정확한 판정은 아직
 펼치지 않았습니다. 다음 장은 scheduler를 해부합니다. 라이브러리에서 가장
 중요한 83줄입니다.

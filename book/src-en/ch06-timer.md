@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch06-timer.md sha256:d7df90e38a1f -->
+<!-- translated-from: book/src/ch06-timer.md sha256:2d8e5dfc5395 -->
 
 # Time: timer_queue and steady_timer
 
@@ -42,7 +42,7 @@ one reference in the heap, one in the timer object's `pending_`. Whoever
 moves first decides — `cancel()` grabbing the lock first moves the handler
 out and posts the abort; `take_expired` grabbing it first moves the handler
 out and delivers success. The mutex narrows the race to an atomic instant;
-neither side ever sees a half-dead entry.
+neither side ever sees a half-finished entry.
 
 ## Close Reading: pop_at and the Real Bug
 
@@ -141,7 +141,7 @@ the heap does not know the reactor exists, so the lock order
 
 ## steady_timer: Waiting, Cancelling, Destroying
 
-The heap is the machinery; `steady_timer` is the wheel the user holds. Three
+The heap is the machinery; `steady_timer` is the entry point the user operates. Three
 operations, one look each.
 
 **`async_wait`**: packs `{expiry_, handler}` into an entry and hangs it in the
@@ -166,7 +166,7 @@ in flight** (the scheduler's `take_expired` took the handler) — `cancel`
 returns 0 and does nothing. Note the lock discipline: `take_expired` moving
 the handler out of the entry and `cancel`'s `remove` are serialized by the
 same `timer_queue::mutex_`, so there is no intermediate state where both or
-neither get the handler. Invariant 2 honored here: from whichever stack
+neither get the handler. Invariant 2 holds here: from whichever stack
 `cancel` is called, the handler executes via `post` in the run loop, never
 re-entering.
 
@@ -234,7 +234,7 @@ lock.)
 
 ---
 
-Queue, readiness, time — the engine's three pillars are all dissected, and
+Queue, readiness, time — the engine's three core elements are all dissected, and
 all wake-up paths are in place. The next chapters put this engine to work:
 `socket`'s `async_read_some` "stores state, registers interest" at
 initiation, and only touches the system call in `do_read` after readiness —

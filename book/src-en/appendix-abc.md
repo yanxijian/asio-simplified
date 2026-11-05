@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/appendix-abc.md sha256:b70095ed69ae -->
+<!-- translated-from: book/src/appendix-abc.md sha256:9634cbc50de5 -->
 
 # Appendix A/B/C: Glossary · The Asio Tree · The Test Suite
 
@@ -9,14 +9,14 @@ chapter 1), one sentence each:
 
 | Term | One-sentence definition |
 | --- | --- |
-| synchronous call | return means the result is in hand; the function return is a full stop |
+| synchronous call | return means the result is in hand; a return means the call has finished |
 | reactor | the kernel only reports "who is ready"; the framework does the I/O (select/poll/epoll/WSAPoll) |
 | proactor | the kernel performs the I/O; the callback receives the result (Windows IOCP) |
 | handler | the async operation's completion function, carrying the result or error |
 | initiating function | e.g. `async_read_some` — registers only, never executes |
 | `io_context` | the service container plus the host of the `run()` loop |
 | service | an engine part hung on the context (scheduler, reactor, timer queue) |
-| work (unit) | the "something is pending" accounting unit; zero count and three empty sources means stop |
+| work (unit) | the "something is pending" counting unit; zero count and three empty sources means stop |
 | work guard | `io_context::work` / `executor_work_guard` — a work unit held on purpose |
 | op_queue / operation | asio's universal envelope: handler + allocator + work + cancellation, on the heap |
 | completion signature | e.g. `void(error_code, size_t)` — decides the handler's shape |

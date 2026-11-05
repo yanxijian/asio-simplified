@@ -1,40 +1,24 @@
-<!-- translated-from: book/src/ch13-tokens.md sha256:e20946bd683f -->
+<!-- translated-from: book/src/ch13-tokens.md sha256:1c2087b7f933 -->
 
 # completion token 层：結果の受け渡し方
 
-executor 層は「どこで走るか」に答えました。この章——この層のもう半分——は
-**結果をどんな形で呼び出し側に返すか**に答えます。同じ発起関数、
+executor 層は「どこで走るか」に答えました。この章——この層のもう半分——は**結果をどんな形で呼び出し側に返すか**に答えます。同じ発起関数、
 
 ```cpp
 socket.async_read_some(buffer, /* what goes here? */);
 ```
 
-に対して、呼び出し側ごとに欲しいものがまったく違います：コールバックを欲しい人、
-`std::future` を欲しい人、coroutineを欲しい人、結果に興味がない人
-（発射したら忘れる）。asio の答えは、「ここに何を置くか」をコンパイル時の
-パラメータにすること——**completion token** であり、特殊化の仕組みによって、
-同じ発起関数が結果の形ごとに 1 回だけ実装されるようにします。
+に対して、呼び出し側ごとに欲しいものがまったく違います：コールバックを欲しい人、`std::future` を欲しい人、coroutine を欲しい人、結果に興味がない人（発射したら忘れる）。asio の答えは、「ここに何を置くか」をコンパイル時のパラメータにすること——**completion token** であり、特殊化の仕組みによって、同じ発起関数が結果の形ごとに 1 回だけ実装されるようにします。
 
 ## 設計：token はコンパイル時のポリシー
 
 機構を 3 つのルールに圧縮します：
 
-1. **すべての発起関数は自分の完了シグネチャを宣言します**。`async_read_some` の
-   シグネチャは `void(error_code, std::size_t)` です。発起関数は token 自体を
-   処理しません——シグネチャと token をまとめて `async_result` に渡すだけです；
-2. **`async_result<Token, Signature>` の特殊化が 2 つのことを決めます**：
-   発起関数の戻り値の型、そして「エンジンに実際に渡される完了 handler の形」。
-   デフォルトの特殊化（token が素のコールバックの場合）は `void` を返し、
-   handler は token そのものです——あなたが 20 年間書いてきたコールバックコードは、
-   すべてこのデフォルト特殊化を通っています；
-3. **ユーザーは自分の token を定義できます**。新しい型のために `async_result` を
-   特殊化すれば、それはこのライブラリの一級市民になります——`use_future`、
-   `use_awaitable`、`deferred`、`detached` はすべてこの機構の**利用者**であり、
-   エンジンのハードコーディングではありません。
+1. **すべての発起関数は自分の完了シグネチャを宣言します**。`async_read_some` のシグネチャは `void(error_code, std::size_t)` です。発起関数は token 自体を処理しません——シグネチャと token をまとめて `async_result` に渡すだけです；
+2. **`async_result<Token, Signature>` の特殊化が 2 つのことを決めます**：発起関数の戻り値の型、そして「エンジンに実際に渡される完了 handler の形」。デフォルトの特殊化（token が素のコールバックの場合）は `void` を返し、handler は token そのものです——あなたが 20 年間書いてきたコールバックコードは、すべてこのデフォルト特殊化を通っています；
+3. **ユーザーは自分の token を定義できます**。新しい型のために `async_result` を特殊化すれば、それはこのライブラリの一級市民になります——`use_future`、`use_awaitable`、`deferred`、`detached` はすべてこの機構の**利用者**であり、エンジンのハードコーディングではありません。
 
-sasio にはこの機構がありません。コールバックが唯一の形式で、coroutineは
-`co_spawn.hpp` の明示的なアダプターに依存しています。本章は asio の特殊化体系を
-開き、「sasio に取り付けるなら最小で何か」に答えます。
+sasio にはこの機構がありません。コールバックが唯一の形式で、coroutine は `co_spawn.hpp` の明示的なアダプターに依存しています。本章は asio の特殊化体系を開き、「sasio に取り付けるなら最小で何か」に答えます。
 
 ## trace：4 つの token、4 つの経路
 
@@ -62,9 +46,7 @@ use_awaitable: co_spawn(ctx, session(), asio::detached)
               → the two ends of the same road as sasio's async_operation
 ```
 
-第 2 章のトレースは「発起関数は何を返し、handler は誰か」を問いました——今は
-正確に言えます：**その両方とも `async_result` の特殊化が決めます**。発起関数の
-形は固定の骨格（`async_initiate`）に還元され、可変なのは token だけです。
+第 2 章のトレースは「発起関数は何を返し、handler は誰か」を問いました——今は正確に言えます：**その両方とも `async_result` の特殊化が決めます**。発起関数の形は固定の骨格（`async_initiate`）に還元され、可変なのは token だけです。
 
 ## 精読：async_result の主テンプレート
 
@@ -99,20 +81,12 @@ public:
 };
 ```
 
-主テンプレートが記述するのは**デフォルトの挙動**（token がそのまま handler、
-void を返す）です。token 型ごとに自分の特殊化を提供し、`return_type` と
-`completion_handler_type` を上書きします。`initiate` が鍵の設計です——発起関数を
-2 つに割ります：
+主テンプレートが記述するのは**デフォルトの挙動**（token がそのまま handler、void を返す）です。token 型ごとに自分の特殊化を提供し、`return_type` と `completion_handler_type` を上書きします。`initiate` が鍵の設計です——発起関数を 2 つに割ります：
 
-- **token の処理**（特殊化の仕事）：use_future の特殊化は promise を作り、
-  「promise に値を代入する」オブジェクトを完了 handler とし、`future` を
-  戻り値として返します；
-- **実際の発起**（`Initiation` の仕事）：処理済みの完了 handler を持って
-  socket の `async_read_some` 実装を本当に呼び、エンジンに登録します。
+- **token の処理**（特殊化の仕事）：use_future の特殊化は promise を作り、「promise に値を代入する」オブジェクトを完了 handler とし、`future` を戻り値として返します；
+- **実際の発起**（`Initiation` の仕事）：処理済みの完了 handler を持って socket の `async_read_some` 実装を本当に呼び、エンジンに登録します。
 
-割ることで、発起関数の作者は `Initiation` を 1 回だけ書けばよく、token の体系が
-どう進化しても発起関数は変わりません。これが「1 つの実装、4 つの結果形式」の
-仕掛けです。
+割ることで、発起関数の作者は `Initiation` を 1 回だけ書けばよく、token の体系がどう進化しても発起関数は変わりません。これが「1 つの実装、4 つの結果形式」の仕掛けです。
 
 ## 3 列対照：欠落 ↔ 実装 ↔ 場所
 
@@ -126,16 +100,11 @@ void を返す）です。token 型ごとに自分の特殊化を提供し、`re
 | 発起関数の骨格 | 直接書く | `async_initiate` が token と発起を分離 | `asio/async_result.hpp` の `initiate` |
 | 完成シグネチャの検査 | なし | `completion_signature` コンセプト | `asio/async_result.hpp`（`is_completion_signature`） |
 
-規模の対比：sasio の `co_spawn.hpp`（113 行）は 1 つの形式——「coroutine
-アクセス」を担います。asio の `use_awaitable.hpp` + `impl/co_spawn.hpp` +
-`async_result` 体系は**任意の**形式に同じ発起実装を提供します。増えたのは
-「より良いcoroutine」ではなく、「結果の形式そのものが拡張点になった」ことです。
+規模の対比：sasio の `co_spawn.hpp`（113 行）は 1 つの形式——「coroutine アクセス」を担います。asio の `use_awaitable.hpp` + `impl/co_spawn.hpp` + `async_result` 体系は**任意の**形式に同じ発起実装を提供します。増えたのは「より良いcoroutine」ではなく、「結果の形式そのものが拡張点になった」ことです。
 
 ## 練習
 
-**実験**：sasio のために手書きの最小 future token を書きます。ジェネリックは
-求めず、意味論だけ：`read_with_future(socket, buffer)` は
-`std::future<std::size_t>` を返します（エラーは例外で）：
+**実験**：sasio のために手書きの最小 future token を書きます。ジェネリックは求めず、意味論だけ：`read_with_future(socket, buffer)` は `std::future<std::size_t>` を返します（エラーは例外で）：
 
 ```cpp
 std::future<std::size_t> read_with_future(
@@ -156,21 +125,10 @@ std::future<std::size_t> read_with_future(
 }
 ```
 
-走らせた後、第 8 章と比べてください。この 10 行の関数がすることは
-`write_op` の shared_ptr リレーと同じ種類です——「完了時にする動作」を状態と
-ともにエンジンに渡す。さらに一歩：asio は結果の形式ごとに `read_with_xxx` を
-書かないのはなぜですか？答えは `async_initiate` の分割の中にあります。
+走らせた後、第 8 章と比べてください。この 10 行の関数がすることは `write_op` の shared_ptr リレーと同じ種類です——「完了時にする動作」を状態とともにエンジンに渡す。さらに一歩：asio は結果の形式ごとに `read_with_xxx` を書かないのはなぜですか？答えは `async_initiate` の分割の中にあります。
 
-**バグハント**：第 11 章の sasio coroutineアダプター（`co_spawn.hpp` の自由
-関数）は入口ごとに 1 つです。asio では同じ操作がコールバックと `use_awaitable`
-の両方をどう支えるのか？`asio/use_awaitable.hpp` を開き、`async_result` 特殊化の
-「token が完了 handler になる」部分を見つけ、答えてください：完了 handler が
-呼ばれた時、coroutineを再開するのは誰か？（辿ると `awaitable_frame::resume` に
-着きます——第 11 章 `awaiting_.resume()` の asio における同名の兄弟です。）
+**バグハント**：第 11 章の sasio coroutineアダプター（`co_spawn.hpp` の自由関数）は入口ごとに 1 つです。asio では同じ操作がコールバックと `use_awaitable` の両方をどう支えるのか？`asio/use_awaitable.hpp` を開き、`async_result` 特殊化の「token が完了 handler になる」部分を見つけ、答えてください：完了 handler が呼ばれた時、coroutine を再開するのは誰か？（辿ると `awaitable_frame::resume` に着きます——第 11 章 `awaiting_.resume()` の asio における同名の兄弟です。）
 
 ---
 
-executor と completion token の 2 層がともに分解されました。本書の冒頭の問いに
-答えられるようになりました：asio の 169,063 行のうち、何がモデルで、何が機械か？
-次章は完全な読書マップを提示します——sasio の 9 章を asio のソースツリーに
-対応させ、6 週間の読書計画を添えて。
+executor と completion token の 2 層がともに分解されました。本書の冒頭の問いに答えられるようになりました：asio の 169,063 行のうち、何がモデルで、何が機械か？次章は完全な読書マップを提示します——sasio の 9 章を asio のソースツリーに対応させ、6 週間の読書計画を添えて。

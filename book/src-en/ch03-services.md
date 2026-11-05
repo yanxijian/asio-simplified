@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch03-services.md sha256:966ab72561e0 -->
+<!-- translated-from: book/src/ch03-services.md sha256:ac6cca903afe -->
 
 # Why `io_context` Is So Thin: The Service Registry
 
@@ -138,7 +138,7 @@ Four places, each with a reason:
   into a hash table — "the scheduler service" and "the reactor service" are
   naturally different keys. asio uses typeid too, just wrapped in its own
   registry structure;
-- **③ Hit and return**. This is where invariant 1's "at most one" is honored —
+- **③ Hit and return**. This is where invariant 1's "at most one" holds —
   the second request receives a reference to the same object;
 - **④ The context goes into the constructor**. Every service's first
   constructor argument is `*this`, so services can use the container in
@@ -210,6 +210,6 @@ frames?
 
 The container is in place and its first service, the scheduler, already
 sits inside. But so far we have only said "handlers in the queue get run" —
-the full run loop, the work-accounting rules, and the exact definition of
+the full run loop, the work-counting rules, and the exact definition of
 "no work left" are still unopened. Next chapter dissects the scheduler: the
 most important 83 lines in the library.

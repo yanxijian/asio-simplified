@@ -1,6 +1,5 @@
-<!-- translated-from: book/src/ch12-executor.md sha256:3662da51bc7b -->
+<!-- translated-from: book/src/ch12-executor.md sha256:c0e46a7ada0b -->
 
-<!-- translated-from: book/src/ch12-executor.md sha256:3662da51bc7b -->
 
 # executor 계층: 완료 전달 정책
 
@@ -138,7 +137,7 @@ class any_io_executor :
 
 주의할 것은 그것이 **클래스**이며, `execution::any_executor<...>`를 상속한다는
 점입니다(프로퍼티 이름은 `blocking_t::never_t` 같은 중첩 형식), 7개의
-프로퍼티가 "블록 금지", "work 기장", "계속 관계"를 조회·수정 가능한 키로
+프로퍼티가 "블록 금지", "work 카운트", "계속 관계"를 조회·수정 가능한 키로
 바꿉니다. 이러한 프로퍼티를 만족하는 임의의 executor를 담을 수 있는 소거
 컨테이너입니다: 내측은 소형 객체 최적화 저장소, 호출은 가상 함수 표를
 통과합니다. 1.74부터 모든 I/O 객체의 기본 executor 인수입니다 —

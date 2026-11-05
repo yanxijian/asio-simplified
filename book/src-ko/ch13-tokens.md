@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch13-tokens.md sha256:e20946bd683f -->
+<!-- translated-from: book/src/ch13-tokens.md sha256:1c2087b7f933 -->
 
 # completion token 계층: 결과를 돌려받는 방식
 

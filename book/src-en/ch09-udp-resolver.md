@@ -1,10 +1,10 @@
-<!-- translated-from: book/src/ch09-udp-resolver.md sha256:a27814c9337f -->
+<!-- translated-from: book/src/ch09-udp-resolver.md sha256:16a0cc61db85 -->
 
 # UDP and the resolver: Two Reuses of One Engine
 
 With the engine's three pillars in place and TCP's two-phase shape standing,
 the skeleton of a network library is complete. This chapter adds two daily
-puzzle pieces, each carrying its own lesson:
+components, each carrying its own lesson:
 
 **UDP** swaps the system call (`sendto` / `recvfrom`) while **barely touching
 the engine** — the same descriptor table, the same `WSAPoll`, the same
@@ -147,7 +147,7 @@ Five points, in time order:
    the handler directly — its result (error code + endpoint list) is
    captured by value into the lambda and delivered to the queue;
 5. **The unit returns on the posted lambda**. The `release` guard's
-   destructor fires **after** the handler runs — the unit stays on the books
+   destructor fires **after** the handler runs — the unit stays counted
    through parsing and queueing, released only when the handler finishes.
    Exceptions do not leak it either: the RAII old trick, `handler_work`'s
    cross-thread cousin from chapter 4.
@@ -216,8 +216,8 @@ for both receiving and sending is not enough — while `async_send_to` is still
 outstanding, the next `async_receive_from` has already re-registered on the
 same buffer, and a second datagram overwrites the bytes in flight. Each send
 copies its own payload, held alive by the lambda's `shared_ptr` until the
-send completes (the handler's destruction releases it). Does that hand look
-familiar? `write_op`'s relay baton from chapter 8, pocket edition.
+send completes (the handler's destruction releases it). Same technique as
+chapter 8: `write_op`'s relay baton, pocket edition.
 
 **Bug hunt**: two timings — what is `aborted` in each?
 

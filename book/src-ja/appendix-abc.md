@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/appendix-abc.md sha256:b70095ed69ae -->
+<!-- translated-from: book/src/appendix-abc.md sha256:9634cbc50de5 -->
 
 # 付録 A：用語集
 
@@ -6,14 +6,14 @@
 
 | 用語 | 一文定義 |
 | --- | --- |
-| synchronous / synchronous call | 呼び出しが戻れば結果は手の中。関数の戻りが句点 |
+| synchronous / synchronous call | 呼び出しが戻れば結果は手の中。関数の戻りが終わり |
 | reactor | カーネルは「誰が準備完了か」だけを報告し、I/O はフレームが自分で行う（select/poll/epoll/WSAPoll） |
 | proactor | I/O はカーネルが完了させ、コールバックが受け取るのは結果そのもの（Windows IOCP） |
 | handler | 非同期操作の完了関数。結果またはエラーを携える |
 | initiating function | 発起関数（`async_read_some` など）。登録するだけで実行しない |
 | `io_context` | サービス容器 + `run()` ループの宿主 |
 | service | context に掛かったエンジンの部品（scheduler、reactor、timer queue） |
-| work（単位） | 「まだやることがある」の記帳単位。カウント 0 と 3 つの待ち源がすべて空なら stop |
+| work（単位） | 「まだやることがある」のカウント単位。カウント 0 と 3 つの待ち源がすべて空なら stop |
 | work guard | `io_context::work` / `executor_work_guard`。意図的に保持する work 単位 |
 | op_queue / operation | asio の万能封筒：handler + アロケーター + work + キャンセル状態のヒープ上のオブジェクト |
 | completion signature | 完了シグネチャ。`void(error_code, size_t)` のように handler の形を決める |
@@ -31,8 +31,7 @@
 
 # 付録 B：asio ソースツリーの案内
 
-`include/asio`（1.38.2、600 `.hpp`、169,063 行）を上位から 4 層に。必要に応じて
-掘り下げてください：
+`include/asio`（1.38.2、600 `.hpp`、169,063 行）を上位から 4 層に。必要に応じて掘り下げてください：
 
 ```text
 asio/
@@ -51,16 +50,11 @@ asio/
    └─ handler_tracking   initiation/completion logs (90 lines, ASIO_ENABLE_HANDLER_TRACKING)
 ```
 
-ファイル探しの 3 つのコツ：①`asio/xxx.hpp` でわからなくなったら
-`asio/impl/xxx.hpp` へ。②エンジンの挙動は `detail/impl/*.ipp` へ。③同名の
-`*_reactor*` はプラットフォームごとに 1 つ読めば、残りも付いてきます。
+ファイル探しの 3 つのコツ：①`asio/xxx.hpp` でわからなくなったら `asio/impl/xxx.hpp` へ。②エンジンの挙動は `detail/impl/ *.ipp` へ。③同名の `* _reactor*` はプラットフォームごとに 1 つ読めば、残りも付いてきます。
 
 # 付録 C：テストスイートの案内
 
-sasio の 9 つのテストファイル（`tests/asio/`）は**asio 自家のテストから移植**され
-ました（1.38.2 の `src/tests/unit/`）。ファイルヘッダーに出典と削減を記載。
-これは儀式ではありません——第 6 章のヒープ越界と第 10 章の dispatch 意味論の
-偏差は、どちらもこのテストが捕まえたものです。
+sasio の 9 つのテストファイル（`tests/asio/`）は **asio 自家のテストから移植**されました（1.38.2 の `src/tests/unit/`）。ファイルヘッダーに出典と削減を記載。これは儀式ではありません——第 6 章のヒープ越界と第 10 章の dispatch 意味論の偏差は、どちらもこのテストが捕まえたものです。
 
 | テストファイル | asio の出典 | カバー範囲 |
 | --- | --- | --- |
@@ -75,16 +69,7 @@ sasio の 9 つのテストファイル（`tests/asio/`）は**asio 自家のテ
 
 harness（`unit_test.hpp`）には知る価値のある 2 つの防衛線があります：
 
-1. **アサーションはダイアログを出さない**：Debug CRT のアサーションは通常
-   Abort/Retry/Ignore のダイアログを出し、Ignore を押すと範囲外のプログラムが
-   走り続け、"passed" を印刷さえします。harness は `_CrtSetReportHook2` を
-   インストールして、アサーションを stderr + `_Exit(3)` に変えます——即死、
-   CTest は確実に赤です；
-2. **エラーカウンター**：`ASIO_CHECK` は中断せずに数え、スイートの終わりに
-   カウントで非ゼロを返します——1 回の走行ですべての失敗が見え、最初の 1 つだけ
-   ではありません。
+1. **アサーションはダイアログを出さない**：Debug CRT のアサーションは通常 Abort/Retry/Ignore のダイアログを出し、Ignore を押すと範囲外のプログラムが走り続け、"passed" を印刷さえします。harness は `_CrtSetReportHook2` をインストールして、アサーションを stderr + `_Exit(3)` に変えます——即死、CTest は確実に赤です；
+2. **エラーカウンター**：`ASIO_CHECK` は中断せずに数え、スイートの終わりにカウントで非ゼロを返します——1 回の走行ですべての失敗が見え、最初の 1 つだけではありません。
 
-スイート全体の実行：`cmake --build build && ctest --test-dir build
---output-on-failure`（9 件、約 10 秒）。第 5、6 章の 2 つのクロススレッド起床
-回帰テストは、判別力のあるテスト設計の模範です。修復が欠けていれば確実に
-失敗し（しかもハングしない）ます。
+スイート全体の実行：`cmake --build build && ctest --test-dir build --output-on-failure`（9 件、約 10 秒）。第 5、6 章の 2 つのクロススレッド起床回帰テストは、判別力のあるテスト設計の模範です。修復が欠けていれば確実に失敗し（しかもハングしない）ます。

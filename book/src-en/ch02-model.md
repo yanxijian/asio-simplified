@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch02-model.md sha256:edc7a0b2d266 -->
+<!-- translated-from: book/src/ch02-model.md sha256:ab1b13f6a9af -->
 
 # Reactor and Proactor: The Full Life of One Async Operation
 
@@ -10,18 +10,16 @@ int n = recv(sock, buf, sizeof(buf), 0);
 ```
 
 When `recv` returns, the result is already in your hands: either you have data,
-the peer closed, or something failed. Function return is a full stop. That is
+the peer closed, or something failed. A function return means the call is over. That is
 synchronous.
 
 The problem only shows up once you have two waits. Write a TCP server where
 one thread must sit in `accept` waiting for new connections *and* sit in
-`recv` waiting for data on an established connection — whichever blocks first
-starves the other. Two full stops, one execution path; one of them is going
-to hang.
+`recv` waiting for data on an established connection. Two blocking points, one execution path; whichever blocks first leaves the other waiting forever.
 
-The obvious escape is more threads: one per connection, each owning its own
-`recv`, nobody blocking anybody. It works, and it is genuinely the easiest to
-write. The bill arrives when connection counts climb — a stack per thread,
+The obvious way out is more threads: one per connection, each owning its own
+`recv`, no one blocks anyone. It works, and it is genuinely the easiest to
+write. The cost shows up when connection counts climb — a stack per thread,
 scheduler churn, and the vast majority of threads sitting idle 99% of the
 time. At thousands of connections, the thread-per-connection design collapses
 before your server does.
@@ -41,7 +39,7 @@ and continues with the result in hand; a reactor receives "you may act now";
 a proactor receives "it is done."** Everything else in this chapter unfolds
 that last clause in code.
 
-## Two Faces
+## Two Models
 
 **reactor**: the kernel only answers "which descriptors are ready"; you still
 perform the `read`/`write` yourself. select, poll, epoll, kqueue — and
@@ -53,7 +51,7 @@ initiation, and the callback receives how many bytes were transferred.
 Windows IOCP (I/O Completion Port) is the textbook implementation. What you
 get is a **completion notification**.
 
-asio has both faces and switches by platform:
+asio has both models and switches by platform:
 
 - **Windows**: IOCP, a true proactor. At initiation the OVERLAPPED structure
   and buffer go to the kernel together; what comes out of the completion port
@@ -76,10 +74,10 @@ responsibilities, an order of magnitude less code. The price is that this
 book skips a true proactor; chapter 14's reading map gives the
 `win_iocp_io_context` catch-up path.
 
-Whichever face, the API asio shows you is identical: `async_read_some`
-behaves the same on both platforms. That fact — "API constant, face changes"
+Whichever model, the API asio shows you is identical: `async_read_some`
+behaves the same on both platforms. That fact — "API constant, backend changes"
 — proves the **engine contracts** can exist independently of platform.
-Here are the three sentences the whole book stands on.
+Here are the three sentences the book is built on.
 
 ## The Engine Contracts (Three Invariants)
 
@@ -212,7 +210,7 @@ chapter 4 reads the full text.
 
 ## Comparison Table
 
-| Question | asio (Windows face) | asio (POSIX face) | sasio |
+| Question | asio (Windows backend) | asio (POSIX backend) | sasio |
 | --- | --- | --- | --- |
 | Waiting mechanism | IOCP completion port | epoll / kqueue / select | WSAPoll |
 | Who performs I/O | kernel (true proactor) | framework, after readiness | framework, after readiness |
@@ -222,8 +220,8 @@ chapter 4 reads the full text.
 
 One sentence: **sasio takes asio's POSIX route and runs it on Windows**.
 Reading sasio's reactor is reading a miniature of asio's `epoll_reactor`;
-afterwards, the POSIX face of asio needs no mental gear change. The true
-proactor (IOCP face) differences wait for chapter 14.
+afterwards, the POSIX backend of asio needs no mental gear change. The true
+proactor (IOCP backend) differences wait for chapter 14.
 
 ## Exercises
 

@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch14-map.md sha256:eb220720e315 -->
+<!-- translated-from: book/src/ch14-map.md sha256:3003a21b2560 -->
 
 # A Reading Map for Real Asio
 
@@ -7,7 +7,7 @@ dissected, and sasio's nine chapters (ch3–11) have walked the engine and the
 composition layer once each. What remains is the book's opening promise:
 with all this understanding, how do you read the 169,063 lines of real asio?
 
-This chapter is exempt from the six-part skeleton and uses three sections:
+This chapter is the one exception to the six-part skeleton and uses three sections:
 the source tree's **layering conventions** (knowing the layout saves half
 the wandering), a **six-week reading plan** (clear weekly targets,
 verifiable), and a **symbol mapping list** — where every sasio concept lands

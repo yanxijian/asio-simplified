@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch01-why.md sha256:e79e19e69773 -->
+<!-- translated-from: book/src/ch01-why.md sha256:36bdae6a16cb -->
 
 # Why Read the 4,200-Line Version First
 
@@ -26,7 +26,7 @@ waiting for you to figure out which one is active.
 
 The problem is not that asio is badly written — it is an industrial library,
 and those layers each earn their keep. The problem is that **the async model
-you want to understand is tangled with the general-purpose machinery that
+you want to understand is intertwined with the general-purpose machinery that
 makes it portable and extensible**: the model itself is maybe two or three
 thousand lines; everything else exists so the model runs on six platforms and
 accepts arbitrary completion tokens.
@@ -190,5 +190,5 @@ the implementation from the behavior.
 ---
 
 The model part starts with the next chapter, and with a question that does not
-look like a question: where exactly is the asynchrony? How did the full stop
+look like a question: where exactly is the asynchrony? How did that hard stop
 at the end of `recv` get moved?

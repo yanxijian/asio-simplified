@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch10-strand.md sha256:c98c21cf9bfd -->
+<!-- translated-from: book/src/ch10-strand.md sha256:12005a9b1d66 -->
 
 # strand: 하나의 큐와 하나의 running 플래그
 
@@ -14,7 +14,7 @@ asio의 대답을 strand라고 부릅니다: **일련의 handler에 "결코 동�
 `include/sasio/strand.hpp`와 `src/strand.cpp`의 합계는 272줄입니다 — 이 장이
 그것을 엽니다. 그리고 방금 일어난 버그도 강의합니다: 이 저장소의 검토
 프로세스가 집필 기간 중에 잡은 strand 의미론의 편차가, 제5장의 두 번의 깨움
-누락과 나란히 커밋 히스토리에 누워 있습니다.
+누락과 나란히 커밋 히스토리에 기록되어 있습니다.
 
 ## 설계: 큐, 플래그, 배수 루프
 
@@ -232,7 +232,7 @@ associated executor에 붙이며, `running_in_this_thread`는 executor의 호출
 `async_read(socket, buf, bind_executor(strand, h))`는 **합성 연산의 내부의
 모든 중간 완료**를 strand에 통과시킵니다. sasio의 수동 랩은 명시적으로 감싼
 그 1단만을 감쌉니다. `examples/ex04_bind_executor.cpp`가 랩의 모습을 10줄로
-보여주고, 그것이 할 수 없는 것도 보여줍니다 — 이 구멍의 원리(associated
+보여주고, 그것이 할 수 없는 것도 보여줍니다 — 이 차이의 원리(associated
 executor의 검색 체인)는 제12장의 주제입니다.
 
 ## 연습
@@ -244,8 +244,7 @@ executor의 검색 체인)는 제12장의 주제입니다.
 병행 실행하는 handler의 피크는 1이 아니게 됩니다. 이 대조가 strand의 전체
 가치이자, "어떤 상태에 strand의 보호가 필요한가"의 판별 실험입니다.
 
-**버그 사냥**: 이 장의 서두에 언급한 strand dispatch 버그는 저장소의 역사
-안에 누워 있습니다. `tests/asio/strand.cpp`에서
+**버그 사냥**: 이 장의 서두에 언급한 strand dispatch 버그는 저장소의 역사에 기록되어 있습니다. `tests/asio/strand.cpp`에서
 `strand_dispatch_outside_run_test`를 찾아, 이름을 바꾸어 실행되지 않게 하고,
 `src/strand.cpp`의 dispatch 인라인 조건을 `scheduler.can_dispatch() &&
 !running`에서 일시적으로 `!running`으로 되돌려(초기판의 편차를 복원하여),

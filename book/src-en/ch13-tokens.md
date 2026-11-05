@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch13-tokens.md sha256:e20946bd683f -->
+<!-- translated-from: book/src/ch13-tokens.md sha256:1c2087b7f933 -->
 
 # The Completion-Token Layer: How Results Come Back
 
@@ -27,7 +27,7 @@ Compress the mechanism into three rules:
    signature and the token together to `async_result`;
 2. **`async_result<Token, Signature>`'s specializations decide two things**:
    the initiating function's return type, and what "the completion handler
-   actually given to the engine" looks like. The default specialization
+   actually given to the engine" takes shape. The default specialization
    (the token is a plain callback) returns `void` and the handler is the
    token itself — the twenty years of callback code you have written all
    walked through this default specialization;

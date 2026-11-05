@@ -86,9 +86,14 @@ def main():
                 continue
             t = text_of(path)
 
-            # 2. marker hash
+            # 2. marker hash + uniqueness (QA-ko R.2.1: a duplicate stale
+            #    marker made two tools disagree on cleanliness)
             zh_hash = hashlib.sha256(open(zh[name], "rb").read()).hexdigest()[:12]
             marker = "<!-- translated-from: book/src/%s sha256:%s -->" % (name, zh_hash)
+            all_markers = re.findall(r"<!-- translated-from: [^>]* -->", t)
+            if len(all_markers) > 1:
+                problems.append("%s/%s: %d translated-from markers (must be exactly 1)"
+                                % (lang, name, len(all_markers)))
             if marker not in t:
                 m = re.search(r"<!-- translated-from: [^>]* -->", t)
                 if m:

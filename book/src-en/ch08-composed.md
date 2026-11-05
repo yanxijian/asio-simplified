@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch08-composed.md sha256:6033fce1cb13 -->
+<!-- translated-from: book/src/ch08-composed.md sha256:33d0970b98ee -->
 
 # Composed Operations: Operations on Operations
 

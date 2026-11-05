@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch07-socket.md sha256:83de2cf578b7 -->
+<!-- translated-from: book/src/ch07-socket.md sha256:bd7c0e04fd3b -->
 
 # socket: The Initiating Function Only Describes What Happens When Ready
 
@@ -42,7 +42,7 @@ reported.
 
 This chapter opens both phases — initiation and completion. It is the shape
 shared by all of asio's socket code; every `async_*` of
-`basic_stream_socket` looks like this.
+`basic_stream_socket` is as follows.
 
 ## Design: One Slot per Direction
 
@@ -113,7 +113,7 @@ void socket::do_read()
 }
 ```
 
-This is `recv`'s home. Three exits:
+This is where `recv` actually runs. Three exits:
 
 - **False alarm**: poll said readable but `recv` returned `would_block` (the
   data vanished between the check and the call, or poll's level-triggered
@@ -134,7 +134,7 @@ decouple here.
 
 ## Two Asymmetries: connect and close
 
-**connect has no full stop — it has three states.** The initiating function
+**connect has no single end — it has three states.** The initiating function
 `start_connect` calls non-blocking `connect` directly:
 
 - immediate success (common on loopback): `complete_connect(empty error)`;

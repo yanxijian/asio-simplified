@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch05-reactor.md sha256:35a45ce2f608 -->
+<!-- translated-from: book/src/ch05-reactor.md sha256:c48f47d82926 -->
 
 # reactor: 준비 상태, 깨우기, descriptor 테이블
 
@@ -44,7 +44,7 @@ handler는 `do_read`가 진짜 시스템 콜을 끝내고 결과를 얻은 후, 
 들어갑니다(제2장 계약 1). 방향당 하나의 등록만 허용되며, socket의 "방향당
 연산 1개" 규칙과 호응합니다.
 
-**interrupter**는 몽둥이입니다. 자기 주소로 `connect`한 UDP socket으로 —
+**interrupter**는 깨우기 소켓입니다. 자기 주소로 `connect`한 UDP socket으로 —
 안에 1바이트를 쓰면 즉시 "읽기 가능"이 됩니다. 이것을 `WSAPoll` 감시 목록에
 섞어 두면, 잠든 poller를 깨우려는 스레드는 1바이트만 쓰면 됩니다. asio는
 POSIX에서 socket pair, eventfd 지원 Linux에서 eventfd, Windows에서 socket
@@ -185,7 +185,7 @@ sasio의 수리는 `timer_queue::add`가 "새 entry가 힙 꼭대기가 되었�
 **3 개의 대조, 1 개의 패턴.** post의 깨움은 "상태를 바꾸는 곳에서, 그 자리에서
 깨운다"입니다. 두 번의 누락은 모두 "새 대기원"의 두 입구(새 descriptor, 새
 타이머)였고, 수리는 모두 "새로운 최초 대기자가 됨 → 깨운다"였습니다. 요약하면,
-스냅샷 모델의 총강은 1 문: **`WSAPoll`의 답을 바꿀 수 있는 모든 작업은, 그 답을
+스냅샷 모델의 핵심 원칙은 1 문: **`WSAPoll`의 답을 바꿀 수 있는 모든 작업은, 그 답을
 기다리는 사람을 반드시 깨워야 합니다**. asio의 `epoll_reactor`에는 첫 번째
 누락이 없습니다 — epoll의 descriptor 집합은 커널 안에 있어서, `epoll_wait`가
 새 등록을 자연히 봅니다. 스냅샷 문제는 애초에 존재하지 않습니다. 하지만
@@ -251,7 +251,7 @@ void reactor::run_for(clock::duration timeout)
 
 ## 대조표
 
-| 질문 | asio(select 얼굴) | asio(epoll 얼굴) | sasio |
+| 질문 | asio(select 백엔드) | asio(epoll 백엔드) | sasio |
 | --- | --- | --- | --- |
 | 대기 시스템 콜 | `select()`(IOCP 없는 Windows에서는 WSAPoll) | `epoll_wait` | `WSAPoll` |
 | descriptor 집합 | 사용자 공간 스냅샷 | 커널 측, 등록 즉시 유효 | 사용자 공간 스냅샷 |

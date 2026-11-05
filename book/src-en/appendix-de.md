@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/appendix-de.md sha256:60f97c02825b -->
+<!-- translated-from: book/src/appendix-de.md sha256:770fd03bce4f -->
 
 # Appendix D/E: Answers · The Table of Deliberate Differences
 

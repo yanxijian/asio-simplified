@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch05-reactor.md sha256:35a45ce2f608 -->
+<!-- translated-from: book/src/ch05-reactor.md sha256:c48f47d82926 -->
 
 # reactor: Readiness, Wake-ups, and the Descriptor Table
 
@@ -44,7 +44,7 @@ until `do_read` has done the real system call and the result is `post`ed
 (contract one, chapter 2). One registration per direction, matching the
 socket's one-operation-per-direction rule.
 
-The **interrupter** is a truncheon. It is a UDP socket `connect`ed to its own
+The **interrupter** is a wake-up socket. It is a UDP socket `connect`ed to its own
 address — write one byte into it and it instantly becomes readable. Mixed
 into the `WSAPoll` watch list, any thread that wants to wake a sleeping
 poller writes one byte. asio uses a socket pair on POSIX, eventfd on Linux
@@ -100,7 +100,7 @@ function as the queue change, visibly coupled. The lesson: **wherever you
 change state, wake people up right there**.
 
 **Missed wake-up one: first descriptor registration.** When chapter 2 added
-the descriptor table, `start_read` looked like this:
+the descriptor table, `start_read` was as follows:
 
 ```cpp
 void reactor::start_read(SOCKET descriptor, std::function<void()> handler)
@@ -113,10 +113,10 @@ void reactor::start_read(SOCKET descriptor, std::function<void()> handler)
 
 Single-threaded, flawless — the thread initiating `async_read_some` is the
 run loop itself, and after registering it re-copies the snapshot next pass.
-Multi-threaded, it leaks: thread A sleeps in `WSAPoll` (no timers, infinite
+Multi-threaded, it breaks: thread A sleeps in `WSAPoll` (no timers, infinite
 timeout) while thread B initiates `async_read_some` on a new socket — the
 registration lands in the table, but A holds a stale snapshot, and no timer
-or post will rescue it. **That read waits for the end of the world.**
+or post will remedy it. **That read never completes.**
 
 asio's `select_reactor` wrote the answer in `start_unready_op`:
 
@@ -251,7 +251,7 @@ the teaching library does not swallow errors.
 
 ## Comparison Table
 
-| Question | asio (select face) | asio (epoll face) | sasio |
+| Question | asio (select backend) | asio (epoll backend) | sasio |
 | --- | --- | --- | --- |
 | Waiting call | `select()` (WSAPoll on Windows without IOCP) | `epoll_wait` | `WSAPoll` |
 | Descriptor set | user-space snapshot | kernel-side, registration is instantly visible | user-space snapshot |

@@ -1,11 +1,11 @@
-<!-- translated-from: book/src/ch11-coroutine.md sha256:67c19c8bed8d -->
+<!-- translated-from: book/src/ch11-coroutine.md sha256:4f5457477a98 -->
 
 # Coroutines: Callback Chains Written as Straight Lines
 
 Chapter 8's `write_op` glued one layer of callbacks into a chain with a
 shared_ptr relay; a real protocol needs more — "read the header, then the
 body, parse, write back, loop," four or five async steps in sequence, and in
-callback style it grows like this:
+callback style it grows as follows:
 
 ```cpp
 void do_read_header(std::shared_ptr<session> self)

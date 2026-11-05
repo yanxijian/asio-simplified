@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/appendix-de.md sha256:60f97c02825b -->
+<!-- translated-from: book/src/appendix-de.md sha256:770fd03bce4f -->
 
 # 부록 D: 연습 답안
 
@@ -92,7 +92,7 @@ entry의 `heap_index`를 1로 씁니다. `pop_back` 후 힙 크기는 1이 되�
 인덱스 `1 == size()`가 확정됩니다. 단언은 **그 후**에 발화합니다: 2개의
 타이머 객체가 파괴될 때 `cancel()` → `remove()`가 더러운 인덱스를 힙에
 적용하여, Debug STL의 `vector subscript out of range`가 튀어나옵니다.
-폭발 지점은 범행 현장에서 멀리 떨어져 있습니다 — 인덱스형 버그의 전형적
+발생 위치는 오류 발생 지점에서 멀리 떨어져 있습니다 — 인덱스형 버그의 전형적
 특징입니다.
 
 ## ch6 버그 사냥: remove 실패의 3가지 이유

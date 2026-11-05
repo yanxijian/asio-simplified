@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch04-scheduler.md sha256:1feee4a767fd -->
+<!-- translated-from: book/src/ch04-scheduler.md sha256:2eec44ad32d0 -->
 
 # scheduler: The Handler Queue and the Work Count
 
@@ -32,7 +32,7 @@ remaining ones still run? How does `run()` know "there is still work, another
 round is worthwhile"? Who collects the resources of the half-executed handler
 that threw? And the most fundamental one — what is `run()` looping over?
 
-`scheduler`'s 83-line `run_one_impl` plus about thirty lines of bookkeeping
+`scheduler`'s 83-line `run_one_impl` plus about thirty lines of counting code
 answer all four.
 
 ## Design: One Counter Over Three Kinds of Work
@@ -82,7 +82,7 @@ the role of asio's `work_cleanup`. Combining it with `invoke`: when an
 exception flies out of the handler, `handler_work`'s destructor still runs
 during stack unwinding and the count drops correctly; the exception keeps
 flying and escapes `run()` to the caller. That is asio's behavior: **the
-exception is yours, the bookkeeping is the framework's**.
+exception is yours, the counting is the framework's**.
 
 ## Close Reading: run_one_impl in Full
 
@@ -151,7 +151,7 @@ returning true means "one unit of work done this pass"; `run_impl` is a
 counting shell: `while (run_one_impl(block)) ++count;`.
 
 `handler_work` is constructed here — from the dequeue until execution ends,
-this handler's unit stays on the books, released by the destructor. Invariant
+this handler's unit stays counted, released by the destructor. Invariant
 1, honored.
 
 **Step 2: the queue is empty — check the timers.**
@@ -258,7 +258,7 @@ top of its next pass. asio's `work_finished()` behaves the same way.
 | --- | --- | --- |
 | The loop | `detail/impl/scheduler.ipp` `do_run_one()` | `src/scheduler.cpp` `run_one_impl()` |
 | Work count | `outstanding_work_` | `work_count_` |
-| Execution-time bookkeeping | operation's `work_cleanup` | `handler_work` RAII |
+| Execution-time counting | operation's `work_cleanup` | `handler_work` RAII |
 | Immediate completion | `post_immediate_completion()` | plain `post` |
 | Stop condition | `outstanding_work_ == 0` (optionally uncounted at construction) | four conditions (timers and descriptors included) |
 | Guard | `executor_work_guard` | `io_context::work` |

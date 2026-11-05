@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch10-strand.md sha256:c98c21cf9bfd -->
+<!-- translated-from: book/src/ch10-strand.md sha256:12005a9b1d66 -->
 
 # strand: One Queue and One Running Flag
 
@@ -172,7 +172,7 @@ void strand_dispatch_outside_run_test()
 }
 ```
 
-Lay the three inline-execution paths side by side — the full ledger for
+Record the three inline-execution paths side by side — the full summary for
 chapter 2's contract one:
 
 | Path | Inline condition | Object tested |
@@ -249,7 +249,7 @@ concurrently executing handlers is no longer 1. That contrast is the
 strand's entire value, and the test for "which state needs strand
 protection."
 
-**Bug hunt**: the strand dispatch bug from this chapter's opening sits in the
+**Bug hunt**: the strand dispatch bug from this chapter's opening is recorded in the
 repository history. Open `tests/asio/strand.cpp`, rename
 `strand_dispatch_outside_run_test` so it will not run, and temporarily change
 `src/strand.cpp`'s inline condition from
@@ -263,6 +263,6 @@ review-caught bug.
 ---
 
 With serialisation in place, the callback-style asio is complete. The last
-modern piece remains: writing callbacks as straight lines — `co_await`. Next
+modern component remains: writing callbacks as straight lines — `co_await`. Next
 chapter opens `awaitable<T>` and `co_spawn`: promises, symmetric transfer,
 and the completion handler hiding inside a destructor.

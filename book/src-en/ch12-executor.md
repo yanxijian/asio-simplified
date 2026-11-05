@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch12-executor.md sha256:3662da51bc7b -->
+<!-- translated-from: book/src/ch12-executor.md sha256:c0e46a7ada0b -->
 
 # The Executor Layer: Completion-Delivery Policy
 
@@ -6,7 +6,7 @@ Chapter 10 left a hook: sasio's strand serializes **the handlers you
 explicitly give it**, but the intermediate completions inside `async_write`
 do not follow automatically — in asio that is called "automatic inheritance,"
 and it is the executor layer's work. This chapter covers the cut layer: what
-problem it solves, what its mechanism looks like, and the minimum set you
+problem it solves, what shape its mechanism takes, and the minimum set you
 would install to bring it back to sasio.
 
 Unlike the previous eleven chapters, this chapter's "close reading" reads
@@ -142,7 +142,7 @@ class any_io_executor :
 
 Note it is a **class** inheriting `execution::any_executor<...>` (the
 property names use the nested form `blocking_t::never_t`), seven properties
-turning "must not block," "work accounting," and "continuation relations"
+turning "must not block," "work counting," and "continuation relations"
 into queryable/modifiable keys. It is an erasure container accepting any
 executor satisfying those properties: small-object-optimized storage inside,
 virtual dispatch on call. Since 1.74 it is the default executor parameter of

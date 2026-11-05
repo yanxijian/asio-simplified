@@ -1,4 +1,4 @@
-<!-- translated-from: book/src/ch06-timer.md sha256:d7df90e38a1f -->
+<!-- translated-from: book/src/ch06-timer.md sha256:2d8e5dfc5395 -->
 
 # 시간: timer_queue와 steady_timer
 
@@ -98,7 +98,7 @@ heap_.pop_back();
 1로 줄어듭니다. 이 시점에 `removed->heap_index == 1 == heap_.size()` —
 범위 외의 값이 확정됩니다.
 
-언제 폭발하는가? 이 entry는 `steady_timer`의 `pending_`가 참조를 가지며,
+언제 발생하는가? 이 entry는 `steady_timer`의 `pending_`가 참조를 가지며,
 타이머 객체의 소멸자가 `cancel()`을 호출하고, `cancel`이 `remove`를 호출하며,
 `remove`는 `heap_index = 1`로 크기 1의 힙을 조회합니다 — `heap_[1]`은 범위
 외이고, Debug판 STL의 단언이 그 자리에서 튀어나옵니다
@@ -216,10 +216,10 @@ t2.async_wait([](sasio::error_code) {});
 ```
 
 Debug판으로 빌드·실행하고, 단언이 튀어나오는 **시기와 호출 스택**을
-보십시오 — 폭발 위치는 `pop_at`이 아니라, **그 후**의 어딘가의 `remove`의
+보십시오 — 발생 위치는 `pop_at`이 아니라, **그 후**의 어딘가의 `remove`의
 `heap_[index]`입니다. 올바른 구현으로 되돌리면, 단언은 사라집니다. 이 연습이
 주는 것은 감각입니다: "인덱스와 위치가 항상 일치해야 하는" 구조에서, 더러운
-인덱스의 폭발 지점은, 항상 범행 현장에서 멀리 떨어져 있습니다.
+인덱스의 발생 위치은, 항상 오류 발생 지점에서 멀리 떨어져 있습니다.
 
 **버그 사냥**: `steady_timer::cancel`에서, `timers_.remove(entry)`가 false를
 반환하면 함수는 직접 `return 0`합니다 — 아무것도 전달하지 않습니다. 그러나 이

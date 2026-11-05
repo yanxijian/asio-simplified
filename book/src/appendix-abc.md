@@ -4,14 +4,14 @@
 
 | 术语 | 一句话定义 |
 | --- | --- |
-| synchronous / synchronous call | 调用返回即有结果；函数返回是句号 |
+| synchronous / synchronous call | 调用返回即有结果；函数返回即结束 |
 | reactor | 内核只报告「谁就绪」，I/O 由框架自己做（select/poll/epoll/WSAPoll） |
 | proactor | I/O 由内核完成，回调拿到的直接是结果（Windows IOCP） |
 | handler | 异步操作的完成函数，携带结果或错误 |
 | initiating function | 发起函数（如 `async_read_some`），只登记不执行 |
 | `io_context` | 服务容器 + `run()` 循环的宿主 |
 | service | 挂在 context 上的引擎部件（scheduler、reactor、timer queue） |
-| work（单位） | 「还有活干」的记账单位；计数归零且三类待办皆空则 stop |
+| work（单位） | 「还有活干」的计数单位；计数归零且三类待办皆空则 stop |
 | work guard | `io_context::work` / `executor_work_guard`，人为持有的 work 单位 |
 | op_queue / operation | asio 的万能信封：handler + 分配器 + work + 取消状态的堆上对象 |
 | completion signature | 完成签名，如 `void(error_code, size_t)`，决定 handler 形状 |
@@ -29,8 +29,7 @@
 
 # 附录 B：asio 源码树导览
 
-`include/asio`（1.38.2，600 个 `.hpp`、169,063 行）自顶向下的四层，读者按
-需要下钻：
+`include/asio`（1.38.2，600 个 `.hpp`、169,063 行）自顶向下的四层，读者按需要下钻：
 
 ```text
 asio/
@@ -50,14 +49,11 @@ asio/
 
 ```
 
-三条找文件的经验：①`asio/xxx.hpp` 看不懂时去 `asio/impl/xxx.hpp`；②引擎
-行为去 `detail/impl/*.ipp`；③同名的 `*_reactor*` 文件按平台读一个即可。
+三条找文件的经验：①`asio/xxx.hpp` 看不懂时去 `asio/impl/xxx.hpp`；②引擎行为去 `detail/impl/ *.ipp`；③同名的 `* _reactor*` 文件按平台读一个即可。
 
 # 附录 C：测试套件导读
 
-sasio 的 9 个测试文件（`tests/asio/`）**移植自 asio 自家测试**（1.38.2 的
-`src/tests/unit/`），文件头标注来源与裁剪。这不是形式——第 6 章的堆越界
-bug、第 10 章的 dispatch 语义偏差，都是这批测试抓出来的。
+sasio 的 9 个测试文件（`tests/asio/`）**移植自 asio 自家测试**（1.38.2 的 `src/tests/unit/`），文件头标注来源与裁剪。这不是形式——第 6 章的堆越界 bug、第 10 章的 dispatch 语义偏差，都是这批测试抓出来的。
 
 | 测试文件 | asio 来源 | 覆盖 |
 | --- | --- | --- |
@@ -72,13 +68,7 @@ bug、第 10 章的 dispatch 语义偏差，都是这批测试抓出来的。
 
 harness（`unit_test.hpp`）有两条值得知道的防线：
 
-1. **断言不弹窗**：Debug CRT 的断言默认弹「Abort/Retry/Ignore」对话框，
-   点 Ignore 会让越界程序继续跑完甚至打印 passed。harness 用
-   `_CrtSetReportHook2` 把断言改成打 stderr + `_Exit(3)`——立即死，CTest
-   必红；
-2. **错误计数器**：`ASIO_CHECK` 只累计不中断，suite 结束按计数返回非零
-   ——一轮能看到全部失败，而非第一个。
+1. **断言不弹窗**：Debug CRT 的断言默认弹「Abort/Retry/Ignore」对话框，点 Ignore 会让越界程序继续跑完甚至打印 passed。harness 用 `_CrtSetReportHook2` 把断言改成打 stderr + `_Exit(3)`——立即死，CTest 必红；
+2. **错误计数器**：`ASIO_CHECK` 只累计不中断，suite 结束按计数返回非零——一轮能看到全部失败，而非第一个。
 
-跑全套：`cmake --build build && ctest --test-dir build --output-on-failure`
-（9 项，约 10 秒）。第 5、6 章的两个跨线程唤醒回归测试是判别力设计的
-范本：修复缺失时必然失败（且不挂起）。
+跑全套：`cmake --build build && ctest --test-dir build --output-on-failure`（9 项，约 10 秒）。第 5、6 章的两个跨线程唤醒回归测试是判别力设计的范本：修复缺失时必然失败（且不挂起）。
