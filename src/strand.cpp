@@ -49,19 +49,35 @@ struct strand::impl : std::enable_shared_from_this<strand::impl>
     }
 
     bool run_now = false;
+    bool schedule = false;
     {
       std::lock_guard<std::mutex> lock(mutex);
-      if (!running)
+      // asio runs a strand-dispatched handler inline only when the calling
+      // thread is inside the io_context (can_dispatch()) and no other handler
+      // already holds the strand (detail/impl/strand_service.ipp,
+      // do_dispatch()). Outside run() it falls back to post(), so nothing
+      // ever executes outside the run() loop.
+      if (scheduler.can_dispatch() && !running)
       {
         running = true;
         run_now = true;
       }
       else
       {
-        // Another thread owns the strand; queue and let it pick this up.
+        // Either another handler owns the strand (queue and let its drain
+        // loop pick this up), or we are outside run() (queue and schedule a
+        // drain through the scheduler).
         queue.push_back(std::move(handler));
+        if (!running)
+        {
+          running = true;
+          schedule = true;
+        }
       }
     }
+
+    if (schedule)
+      schedule_drain();
 
     if (!run_now)
       return;

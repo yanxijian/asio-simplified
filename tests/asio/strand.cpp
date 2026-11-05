@@ -181,10 +181,34 @@ void strand_multithread_test()
   ASIO_CHECK(max_active.load() == 1);
 }
 
+// Regression test for strand dispatch outside run(): asio runs a
+// strand-dispatched handler inline only when the calling thread is inside
+// the io_context (can_dispatch()) and the strand is idle. Calling dispatch
+// from an ordinary thread must NOT execute the handler on that thread; the
+// handler waits for run() (detail/impl/strand_service.ipp, do_dispatch()).
+
+void strand_dispatch_outside_run_test()
+{
+  io_context ioc;
+  strand s(ioc);
+
+  bool ran = false;
+  s.dispatch([&ran] { ran = true; });
+
+  // Nothing ran: no run() loop is active on this thread.
+  ASIO_CHECK(!ran);
+
+  ioc.run();
+
+  // The handler executed inside run().
+  ASIO_CHECK(ran);
+}
+
 ASIO_TEST_SUITE
 (
   "strand",
   ASIO_TEST_CASE(strand_test)
   ASIO_TEST_CASE(strand_order_test)
   ASIO_TEST_CASE(strand_multithread_test)
+  ASIO_TEST_CASE(strand_dispatch_outside_run_test)
 )

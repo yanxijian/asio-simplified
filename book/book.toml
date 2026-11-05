@@ -1,0 +1,12 @@
+[book]
+title = "Asio 伴读：从 4200 行读懂 16 万行"
+authors = ["Xijian Yan"]
+language = "zh"
+src = "src"
+
+[build]
+build-dir = "html"
+
+[output.html]
+git-repository-url = "https://github.com/yanxijian/asio-simplified"
+edit-url-template = "https://github.com/yanxijian/asio-simplified/edit/main/book/{path}"

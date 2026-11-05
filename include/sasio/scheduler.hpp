@@ -45,6 +45,12 @@ public:
   void post(std::function<void()> handler);
   void dispatch(std::function<void()> handler);
 
+  // True when the calling thread is currently running one of this scheduler's
+  // handlers, i.e. inline execution is allowed. This mirrors asio's
+  // scheduler::can_dispatch(), which guards the strand's inline fast path
+  // (detail/impl/strand_service.ipp, do_dispatch()).
+  bool can_dispatch() const;
+
   std::size_t run();
   std::size_t run_one();
   std::size_t poll();

@@ -1,0 +1,18 @@
+# Summary
+
+- [为什么先读 4200 行的版本](ch01-why.md)
+- [Reactor 与 Proactor：一次异步操作的完整生命周期](ch02-model.md)
+- [io_context 为什么这么薄：service 注册表](ch03-services.md)
+- [scheduler：handler 队列与 work 计数](ch04-scheduler.md)
+- [reactor：就绪、唤醒与描述符表](ch05-reactor.md)
+- [时间：timer_queue 与 steady_timer](ch06-timer.md)
+- [socket：发起函数只描述「就绪后做什么」](ch07-socket.md)
+- [组合操作：operation 套 operation](ch08-composed.md)
+- [UDP 与 resolver：同一引擎的两种复用](ch09-udp-resolver.md)
+- [strand：一个队列 + 一个 running 标志](ch10-strand.md)
+- [协程：把回调写成直线代码](ch11-coroutine.md)
+- [executor 层：完成投递策略](ch12-executor.md)
+- [completion token 层：结果获取方式](ch13-tokens.md)
+- [真 asio 阅读地图](ch14-map.md)
+- [附录 A/B/C：术语表 · 源码树 · 测试导读](appendix-abc.md)
+- [附录 D/E：练习答案 · 有意差异总表](appendix-de.md)

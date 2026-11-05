@@ -1,0 +1,12 @@
+[book]
+title = "Reading Asio: From 4,200 Lines to 160,000"
+authors = ["Xijian Yan"]
+language = "en"
+src = "src-en"
+
+[build]
+build-dir = "html-en"
+
+[output.html]
+git-repository-url = "https://github.com/yanxijian/asio-simplified"
+edit-url-template = "https://github.com/yanxijian/asio-simplified/edit/main/book/{path}"

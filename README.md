@@ -39,9 +39,10 @@ side by side. The C++ namespace and CMake target are `sasio`.
 
 - **`io_context` is a service container.** The scheduler, reactor, timer queue, strand and
   socket services live in an `execution_context` and are created on demand.
-- **Handlers always go through a queue.** `post()` only enqueues; `run()` drains. Each queued
-  handler holds one work unit, and the context stops itself when the count reaches zero, so a
-  second `run()` needs `restart()`.
+- **I/O completions go through the queue; expired timers are called directly by the run loop.**
+  `post()` only enqueues; `run()` drains. Each queued handler holds one work unit, and the
+  context stops itself only when the count and all three waiting sources (queue, timers,
+  descriptors) are empty, so a second `run()` needs `restart()`.
 - **The reactor fakes a proactor.** `WSAPoll` reports readiness; the socket operation then
   performs `recv`/`send`/`accept`/`connect` and posts its completion. Poll sets are snapshots,
   so new interest and earlier timers must interrupt the wait — otherwise another thread's
@@ -89,6 +90,8 @@ dismissed with an "Ignore" button and still report success.
 - IPv4 TCP and UDP only; no IPv6, no SSL, no local sockets or serial ports.
 - No executor framework, no completion tokens, no `any_io_executor`.
 - One outstanding operation per direction, one buffer per operation, no buffer sequences.
+- UDP datagram truncation is reported as an error to the handler; Asio swallows
+  `WSAEMSGSIZE` to match POSIX semantics (see the book's appendix E).
 - The resolver starts one short-lived thread per query; `io_context` must outlive outstanding
   queries.
 - Objects are not thread-safe: do not `close()` a socket from another thread while it is waiting.

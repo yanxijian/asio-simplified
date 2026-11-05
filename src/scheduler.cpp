@@ -86,6 +86,11 @@ void scheduler::dispatch(std::function<void()> handler)
   post(std::move(handler));
 }
 
+bool scheduler::can_dispatch() const
+{
+  return current_scheduler == this;
+}
+
 void scheduler::invoke(std::function<void()> handler)
 {
   handler_scope scope(this);

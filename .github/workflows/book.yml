@@ -1,0 +1,86 @@
+# Build the four-language book with mdBook and publish to GitHub Pages.
+# Only book content or this workflow triggers it; library builds are ci.yml,
+# rule checks are hygiene.yml.
+
+name: book
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - book/src/**
+      - book/src-en/**
+      - book/src-ja/**
+      - book/src-ko/**
+      - book/*.toml
+      - book/tools/**
+      - .github/workflows/book.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - book/src/**
+      - book/src-en/**
+      - book/src-ja/**
+      - book/src-ko/**
+      - book/*.toml
+      - book/tools/**
+      - .github/workflows/book.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: book-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build-and-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install mdBook
+        run: |
+          curl -sSL https://github.com/rust-lang/mdBook/releases/download/v0.5.4/mdbook-v0.5.4-x86_64-unknown-linux-musl.tar.gz | tar xz
+          sudo install mdbook /usr/local/bin/mdbook
+          mdbook --version
+
+      - name: Translation checks
+        run: python3 book/tools/check_translations.py
+
+      - name: Build four books
+        run: pwsh -File book/tools/build-books.ps1
+
+      - name: Stage book pages (merged landing page)
+        if: github.event_name == 'push'
+        run: |
+          mkdir -p book/pages
+          cp book/tools/landing.html book/pages/index.html
+          cp -r book/html      book/pages/zh
+          cp -r book/html-en   book/pages/en
+          cp -r book/html-ja   book/pages/ja
+          cp -r book/html-ko   book/pages/ko
+
+      - name: Upload pages artifact
+        # preview on PRs; publishing happens on push only
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: book/pages
+
+  deploy:
+    name: deploy-pages
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

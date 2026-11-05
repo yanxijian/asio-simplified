@@ -1,0 +1,12 @@
+[book]
+title = "Asio 読書案内：4,200 行から 16 万行へ"
+authors = ["Xijian Yan"]
+language = "ja"
+src = "src-ja"
+
+[build]
+build-dir = "html-ja"
+
+[output.html]
+git-repository-url = "https://github.com/yanxijian/asio-simplified"
+edit-url-template = "https://github.com/yanxijian/asio-simplified/edit/main/book/{path}"

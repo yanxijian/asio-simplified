@@ -1,0 +1,12 @@
+[book]
+title = "Asio 읽기 안내: 4,200행에서 16만 행까지"
+authors = ["Xijian Yan"]
+language = "ko"
+src = "src-ko"
+
+[build]
+build-dir = "html-ko"
+
+[output.html]
+git-repository-url = "https://github.com/yanxijian/asio-simplified"
+edit-url-template = "https://github.com/yanxijian/asio-simplified/edit/main/book/{path}"
