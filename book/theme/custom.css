@@ -40,40 +40,69 @@
 }
 
 /* ---------- typography ---------- */
-body {
-  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
-    "PingFang SC", "Hiragino Sans", "Yu Gothic", "Microsoft YaHei",
-    "Malgun Gothic", sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
+/* mdBook sets the root font-size to 62.5% (1rem = 10px), so every reading
+ * size here is in px to stay independent of that trap. */
 
 .content {
-  font-size: 1.02rem;
-  line-height: 1.78;
+  font-size: 17px;
+  line-height: 1.85;
+  --code-font-size: 14.5px;
+}
+
+/* Per-language body stacks: latin first (code identifiers render in
+ * Segoe UI/system), then a screen font chosen per script. */
+html[lang="en"] .content {
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  font-size: 16.5px;
+}
+
+html[lang="zh"] .content {
+  font-family: "Segoe UI", system-ui, "Microsoft YaHei UI", "Microsoft YaHei",
+    "PingFang SC", "Noto Sans SC", sans-serif;
+}
+
+html[lang="ja"] .content {
+  font-family: "Segoe UI", system-ui, "Meiryo", "Yu Gothic",
+    "Hiragino Kaku Gothic ProN", sans-serif;
+}
+
+html[lang="ko"] .content {
+  font-family: "Segoe UI", system-ui, "Malgun Gothic", "Apple SD Gothic Neo",
+    "Noto Sans KR", sans-serif;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* sidebar chapters at a readable size, not mdBook's shrunken default */
+.sidebar {
+  font-size: 14px;
 }
 
 /* CJK text breathes better with slightly looser paragraph spacing */
-.content p { margin: 0.85em 0; }
+.content p { margin: 0.9em 0; }
 
 .content h1, .content h2, .content h3, .content h4 {
-  line-height: 1.35;
+  line-height: 1.4;
   letter-spacing: -0.01em;
 }
 
 .content h1 {
-  font-size: 1.9rem;
+  font-size: 26px;
   margin-top: 0.4em;
   padding-bottom: 0.35em;
   border-bottom: 1px solid var(--table-border-color);
 }
 
 .content h2 {
-  font-size: 1.45rem;
+  font-size: 20.5px;
   margin-top: 2em;
 }
 
 .content h3 {
-  font-size: 1.18rem;
+  font-size: 17.5px;
   margin-top: 1.6em;
 }
 
