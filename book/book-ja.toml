@@ -8,5 +8,6 @@ src = "src-ja"
 build-dir = "html-ja"
 
 [output.html]
+additional-css = ["theme/custom.css"]
 git-repository-url = "https://github.com/yanxijian/asio-simplified"
 edit-url-template = "https://github.com/yanxijian/asio-simplified/edit/main/book/{path}"

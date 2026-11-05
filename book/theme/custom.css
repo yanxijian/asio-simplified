@@ -1,0 +1,158 @@
+/* Custom polish on top of mdBook's default theme.
+ * Loaded via additional-css in all four book variants (zh/en/ja/ko).
+ *
+ * Strategy: mdBook exposes CSS custom properties per built-in theme
+ * (light / coal / navy / ayu). Overriding the variables re-skins cleanly;
+ * a few element-level rules add rounding, hairlines and CJK typography
+ * regardless of which variable names this mdBook version ships.
+ */
+
+/* ---------- light ---------- */
+.light {
+  --bg: #fbfbfd;
+  --fg: #1f2328;
+  --headings: #14181f;
+  --links: #3b5bdb;
+  --sidebar-bg: #f3f4f8;
+  --sidebar-fg: #3d434d;
+  --sidebar-active: #3b5bdb;
+  --sidebar-non-existant: #9aa1ac;
+  --sidebar-spacer: #dcdfe6;
+  --scroll-bar: #c9ccd4;
+  --icons: #6b7280;
+  --icons-hover: #3b5bdb;
+  --quote: #3b5bdb;
+  --quote-border: #d9defb;
+  --table-border-color: #e6e8ee;
+  --table-header-bg: #f3f4f8;
+  --table-alternate-bg: #f8f9fb;
+  --code-block-bg: #f5f6fa;
+  --code-inline-bg: #eef0f6;
+}
+
+/* ---------- dark variants (keep mdBook bases, retint accents) ---------- */
+.coal, .navy, .ayu {
+  --links: #7f9bff;
+  --sidebar-active: #7f9bff;
+  --quote: #7f9bff;
+  --quote-border: #2f3a5c;
+  --code-block-bg: #1a1d24;
+}
+
+/* ---------- typography ---------- */
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
+    "PingFang SC", "Hiragino Sans", "Yu Gothic", "Microsoft YaHei",
+    "Malgun Gothic", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.content {
+  font-size: 1.02rem;
+  line-height: 1.78;
+}
+
+/* CJK text breathes better with slightly looser paragraph spacing */
+.content p { margin: 0.85em 0; }
+
+.content h1, .content h2, .content h3, .content h4 {
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.content h1 {
+  font-size: 1.9rem;
+  margin-top: 0.4em;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid var(--table-border-color);
+}
+
+.content h2 {
+  font-size: 1.45rem;
+  margin-top: 2em;
+}
+
+.content h3 {
+  font-size: 1.18rem;
+  margin-top: 1.6em;
+}
+
+/* ---------- code ---------- */
+.content pre {
+  border-radius: 8px;
+  border: 1px solid var(--table-border-color);
+  padding: 0.9em 1.1em;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.content code {
+  border-radius: 4px;
+  padding: 0.12em 0.4em;
+}
+
+/* the copy button row should not fight the rounded pre */
+.content .btn-copy {
+  border-radius: 6px;
+}
+
+/* ---------- tables ---------- */
+.content table {
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.content th, .content td {
+  padding: 0.55em 0.9em;
+  border: none;
+}
+
+.content th {
+  font-weight: 600;
+}
+
+.content table, .content thead, .content tbody, .content tr,
+.content th, .content td {
+  border-collapse: separate;
+  border: none;
+  border-bottom: 1px solid var(--table-border-color);
+}
+
+.content tr:last-child td { border-bottom: none; }
+
+/* ---------- blockquote ---------- */
+.content blockquote {
+  border-radius: 0 8px 8px 0;
+  padding: 0.6em 1.1em;
+  margin: 1.1em 0;
+}
+
+/* ---------- sidebar ---------- */
+.sidebar .chapter-item a,
+.sidebar .section-item a {
+  border-radius: 6px;
+  padding: 3px 8px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar .chapter-item a:hover,
+.sidebar .section-item a:hover {
+  background: rgba(127, 155, 255, 0.08);
+}
+
+.sidebar .chapter-item.active a {
+  font-weight: 600;
+}
+
+/* ---------- misc ---------- */
+.content a { text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+.content hr {
+  border: none;
+  border-top: 1px solid var(--table-border-color);
+  margin: 2.2em 0;
+}
+
+/* footer page nav gets the same breathing room as the content */
+.prev-next-title { font-weight: 500; }
