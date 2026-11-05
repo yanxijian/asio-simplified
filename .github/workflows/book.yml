@@ -12,6 +12,7 @@ on:
       - book/src-en/**
       - book/src-ja/**
       - book/src-ko/**
+      - book/theme/**
       - book/*.toml
       - book/tools/**
       - .github/workflows/book.yml
@@ -22,6 +23,7 @@ on:
       - book/src-en/**
       - book/src-ja/**
       - book/src-ko/**
+      - book/theme/**
       - book/*.toml
       - book/tools/**
       - .github/workflows/book.yml
