@@ -8,6 +8,12 @@
  */
 
 /* ---------- light ---------- */
+:root {
+  /* mdBook caps the reading column at 750px; widen it a touch for the
+   * 17px CJK body (fewer awkward wraps around inline code). */
+  --content-max-width: 900px;
+}
+
 .light {
   --bg: #fbfbfd;
   --fg: #1f2328;
