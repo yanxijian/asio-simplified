@@ -118,6 +118,12 @@ body {
   border: 1px solid var(--table-border-color);
   padding: 0.9em 1.1em;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  /* mdBook 0.5 ships no overflow rule for code blocks, so one long line
+   * stretches the whole page on phones (body is overflow-x: hidden, so it
+   * just looks cut off). Scroll inside the rounded box instead. */
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-bar) transparent;
 }
 
 .content code {
@@ -181,6 +187,13 @@ body {
 }
 
 /* ---------- misc ---------- */
+/* the reading column must never exceed the viewport on phones: mdBook
+ * gives pre/table no overflow rules, so cap main and scroll those inside */
+.content main {
+  min-width: 0;
+  max-width: min(var(--content-max-width), 100%);
+}
+
 .content a { text-decoration-thickness: 1px; text-underline-offset: 2px; }
 
 .content hr {
