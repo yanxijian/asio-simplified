@@ -3,28 +3,144 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>asio-simplified book</title>
 <style>
-  body { font-family: -apple-system, "Segoe UI", sans-serif; max-width: 40em;
-         margin: 4rem auto; padding: 0 1.5rem; line-height: 1.6; color: #24292f; }
-  h1 { font-size: 1.6rem; }
-  ul { list-style: none; padding: 0; }
-  li { margin: 0.6rem 0; }
-  a { color: #0969da; text-decoration: none; font-size: 1.1rem; }
-  a:hover { text-decoration: underline; }
-  .lang { display: inline-block; min-width: 8rem; }
-  p.sub { color: #57606a; }
+  :root {
+    --accent: #3b5bdb;
+    --accent-soft: #eef1fc;
+    --bg: #f6f7fb;
+    --card-bg: #ffffff;
+    --fg: #1f2328;
+    --muted: #6b7280;
+    --hairline: #e6e8ee;
+    --shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    --shadow-hover: 0 10px 30px rgba(59, 91, 219, 0.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #7f9bff;
+      --accent-soft: #232a45;
+      --bg: #14161c;
+      --card-bg: #1c1f27;
+      --fg: #e6e8ee;
+      --muted: #9aa1ac;
+      --hairline: #2a2e38;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      --shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.25rem;
+    background:
+      radial-gradient(60rem 30rem at 85% -10%, var(--accent-soft), transparent 60%),
+      var(--bg);
+    color: var(--fg);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { width: 100%; max-width: 42rem; }
+  .overline {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.7rem;
+  }
+  h1 {
+    font-size: clamp(1.6rem, 4.5vw, 2.2rem);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.6rem;
+  }
+  .sub { color: var(--muted); font-size: 1.02rem; margin: 0 0 2rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 0.9rem;
+  }
+  a.card {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  }
+  a.card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-hover);
+  }
+  .card .lang {
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .card .lang .arrow {
+    float: right;
+    color: var(--accent);
+    font-weight: 400;
+    transition: transform 0.16s ease;
+  }
+  a.card:hover .arrow { transform: translateX(4px); }
+  .card .desc { color: var(--muted); font-size: 0.9rem; margin-top: 0.35rem; }
+  /* native font per card */
+  .lang-zh .lang { font-family: "Segoe UI", "Microsoft YaHei UI", "PingFang SC", sans-serif; }
+  .lang-ja .lang { font-family: "Segoe UI", "Meiryo", "Hiragino Kaku Gothic ProN", sans-serif; }
+  .lang-ko .lang { font-family: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  footer {
+    margin-top: 2.2rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  footer .meta { margin-top: 0.3rem; font-size: 0.78rem; opacity: 0.8; }
 </style>
 </head>
 <body>
-<h1>asio-simplified book</h1>
-<p class="sub">Reading asio through a 4,200-line implementation &mdash; in four languages.</p>
-<ul>
-  <li><a href="zh/"><span class="lang">简体中文</span> &mdash; 中文版（原著）</a></li>
-  <li><a href="en/"><span class="lang">English</span> &mdash; full translation</a></li>
-  <li><a href="ja/"><span class="lang">日本語</span> &mdash; 全文翻訳</a></li>
-  <li><a href="ko/"><span class="lang">한국어</span> &mdash; 전문 번역</a></li>
-</ul>
-<p class="sub">Source: <a href="https://github.com/yanxijian/asio-simplified">yanxijian/asio-simplified</a></p>
+<main class="wrap">
+  <p class="overline">asio-simplified · book</p>
+  <h1>Reading Asio, from 4,200 lines to 160,000</h1>
+  <p class="sub">A companion book for the 4,200-line teaching implementation &mdash;
+  in four languages, one story: initiation, readiness, wake-ups, completion.</p>
+
+  <div class="grid">
+    <a class="card lang-zh" href="zh/">
+      <div class="lang">简体中文 <span class="arrow">&rarr;</span></div>
+      <div class="desc">中文版（原著）&middot; 14 章 + 2 附录</div>
+    </a>
+    <a class="card" href="en/">
+      <div class="lang">English <span class="arrow">&rarr;</span></div>
+      <div class="desc">Full translation &middot; 14 chapters + 2 appendices</div>
+    </a>
+    <a class="card lang-ja" href="ja/">
+      <div class="lang">日本語 <span class="arrow">&rarr;</span></div>
+      <div class="desc">全文翻訳 &middot; 14 章 + 2 付録</div>
+    </a>
+    <a class="card lang-ko" href="ko/">
+      <div class="lang">한국어 <span class="arrow">&rarr;</span></div>
+      <div class="desc">전문 번역 &middot; 14개 장 + 2개 부록</div>
+    </a>
+  </div>
+
+  <footer>
+    <a href="https://github.com/yanxijian/asio-simplified">yanxijian/asio-simplified</a>
+    <div class="meta">asio 1.38.2 &middot; sasio 4,207 lines &middot; WSAPoll &middot; C++20 coroutines</div>
+  </footer>
+</main>
 </body>
 </html>
