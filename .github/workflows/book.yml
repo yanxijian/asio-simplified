@@ -75,7 +75,9 @@ jobs:
   deploy:
     name: deploy-pages
     needs: build
-    if: github.event_name == 'push'
+    # deploy on push and manual dispatch (dispatch = full deploy for manual
+    # verification); PRs stay build-and-check only
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pages: write
