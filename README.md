@@ -7,7 +7,7 @@
 [![C++](https://img.shields.io/badge/C%2B%2B-17%20%2F%2020-blue.svg)]()
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)]()
 [![Status: educational](https://img.shields.io/badge/Status-educational-orange.svg)]()
-[![Book](https://img.shields.io/badge/book-online-3b5bdb.svg)](https://yanxijian.github.io/asio-simplified/
+[![Book](https://img.shields.io/badge/book-online-3b5bdb.svg)](https://yanxijian.github.io/asio-simplified/)
 
 A small, readable subset of [Asio](https://github.com/chriskohlhoff/asio) for studying how
 asynchronous I/O libraries work.
