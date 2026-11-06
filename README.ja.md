@@ -9,7 +9,7 @@
 [![Status: educational](https://img.shields.io/badge/Status-educational-orange.svg)]()
 [![Book](https://img.shields.io/badge/book-online-3b5bdb.svg)](https://yanxijian.github.io/asio-simplified/)
 
-<!-- translated-from: README.md sha256:12c1be02bf4e -->
+<!-- translated-from: README.md sha256:e561cc06141c -->
 
 非同期 I/O ライブラリがどのように動くかを学ぶための、[Asio](https://github.com/chriskohlhoff/asio)
 の小さくて読めるサブセットです。

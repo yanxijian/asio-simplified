@@ -9,7 +9,7 @@
 [![Status: educational](https://img.shields.io/badge/Status-educational-orange.svg)]()
 [![Book](https://img.shields.io/badge/book-online-3b5bdb.svg)](https://yanxijian.github.io/asio-simplified/)
 
-<!-- translated-from: README.md sha256:12c1be02bf4e -->
+<!-- translated-from: README.md sha256:e561cc06141c -->
 
 [Asio](https://github.com/chriskohlhoff/asio) 的一个小而可读的子集，用来学习异步 I/O 库是如何工作的。
 📖 **配套书**：[《从 4200 行读懂 16 万行》在线阅读](https://yanxijian.github.io/asio-simplified/)，含简体中文、English、日本語、한국어 四语言版本。
