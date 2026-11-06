@@ -5,9 +5,11 @@ language = "en"
 src = "src-en"
 
 [build]
+create-missing = false
 build-dir = "html-en"
 
 [output.html]
 additional-css = ["theme/custom.css"]
+additional-js = ["theme/home-link.js"]
 git-repository-url = "https://github.com/yanxijian/asio-simplified"
 edit-url-template = "https://github.com/yanxijian/asio-simplified/edit/main/book/{path}"

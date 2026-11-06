@@ -5,9 +5,11 @@ language = "ko"
 src = "src-ko"
 
 [build]
+create-missing = false
 build-dir = "html-ko"
 
 [output.html]
 additional-css = ["theme/custom.css"]
+additional-js = ["theme/home-link.js"]
 git-repository-url = "https://github.com/yanxijian/asio-simplified"
 edit-url-template = "https://github.com/yanxijian/asio-simplified/edit/main/book/{path}"

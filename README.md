@@ -7,20 +7,23 @@
 [![C++](https://img.shields.io/badge/C%2B%2B-17%20%2F%2020-blue.svg)]()
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)]()
 [![Status: educational](https://img.shields.io/badge/Status-educational-orange.svg)]()
+[![Book](https://img.shields.io/badge/book-online-3b5bdb.svg)](https://yanxijian.github.io/asio-simplified/
 
 A small, readable subset of [Asio](https://github.com/chriskohlhoff/asio) for studying how
 asynchronous I/O libraries work.
+
+📖 **Companion book**: [Reading Asio, from 4,200 lines to 160,000](https://yanxijian.github.io/asio-simplified/) — online in Simplified Chinese, English, Japanese, and Korean.
 
 > **Unofficial.** This project is not affiliated with, endorsed by, or sponsored by the Asio
 > project or its author. For production use, use Asio itself.
 
 ## Why
 
-Asio 1.38.2 is 588 headers and about 164,000 lines: eight platform backends, an executor
+Asio 1.38.2 is 600 headers and about 169,000 lines: eight platform backends, an executor
 framework, completion-token dispatch and C++03 compatibility layers. The design is excellent,
 but it is hard to see the design through the machinery.
 
-asio-simplified keeps the model and drops the machinery: Windows only, `WSAPoll`, about 4,100
+asio-simplified keeps the model and drops the machinery: Windows only, `WSAPoll`, about 4,200
 lines, no third-party dependencies, and file/type names that mirror Asio so the two can be read
 side by side. The C++ namespace and CMake target are `sasio`.
 

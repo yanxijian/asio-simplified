@@ -1,57 +1,59 @@
 # asio-simplified
 
-**ç®€ä½“ä¸­æ–‡** Â· [English](README.md) Â· [æ—¥æœ¬èªž](README.ja.md) Â· [í•œêµ­ì–´](README.ko.md)
+**简体中文** · [English](README.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
 
 [![CI](https://github.com/yanxijian/asio-simplified/actions/workflows/ci.yml/badge.svg)](https://github.com/yanxijian/asio-simplified/actions/workflows/ci.yml)
 [![License: BSL-1.0](https://img.shields.io/badge/License-BSL--1.0-blue.svg)](LICENSE_1_0.txt)
 [![C++](https://img.shields.io/badge/C%2B%2B-17%20%2F%2020-blue.svg)]()
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)]()
 [![Status: educational](https://img.shields.io/badge/Status-educational-orange.svg)]()
+[![Book](https://img.shields.io/badge/book-online-3b5bdb.svg)](https://yanxijian.github.io/asio-simplified/)
 
-<!-- translated-from: README.md sha256:725f0014e8d1 -->
+<!-- translated-from: README.md sha256:12c1be02bf4e -->
 
-[Asio](https://github.com/chriskohlhoff/asio) çš„ä¸€ä¸ªå°è€Œå¯è¯»çš„å­é›†ï¼Œç”¨æ¥å­¦ä¹ å¼‚æ­¥ I/O åº“æ˜¯å¦‚ä½•å·¥ä½œçš„ã€‚
+[Asio](https://github.com/chriskohlhoff/asio) 的一个小而可读的子集，用来学习异步 I/O 库是如何工作的。
+📖 **配套书**：[《从 4200 行读懂 16 万行》在线阅读](https://yanxijian.github.io/asio-simplified/)，含简体中文、English、日本語、한국어 四语言版本。
 
-> **éžå®˜æ–¹é¡¹ç›®ã€‚** æœ¬é¡¹ç›®ä¸Ž Asio é¡¹ç›®åŠå…¶ä½œè€…æ²¡æœ‰éš¶å±žã€èƒŒä¹¦æˆ–èµžåŠ©å…³ç³»ã€‚ç”Ÿäº§çŽ¯å¢ƒè¯·ç›´æŽ¥ä½¿ç”¨ Asioã€‚
+> **非官方项目。** 本项目与 Asio 项目及其作者没有隶属、背书或赞助关系。生产环境请直接使用 Asio。
 
-## ä¸ºä»€ä¹ˆ
+## 为什么
 
-Asio 1.38.2 æœ‰ 588 ä¸ªå¤´æ–‡ä»¶ã€çº¦ 16.4 ä¸‡è¡Œï¼š8 å¥—å¹³å°åŽç«¯ã€executor æ¡†æž¶ã€completion token åˆ†æ´¾ï¼Œ
-ä»¥åŠ C++03 å…¼å®¹å±‚ã€‚è®¾è®¡å¾ˆå¥½ï¼Œä½†æœºæ¢°ç»“æž„æŠŠè®¾è®¡é®ä½äº†ã€‚
+Asio 1.38.2 有 600 个头文件、约 16.9 万行：8 套平台后端、executor 框架、completion token 分派，
+以及 C++03 兼容层。设计很好，但机械结构把设计遮住了。
 
-asio-simplified ä¿ç•™æ¨¡åž‹ã€åŽ»æŽ‰æœºæ¢°ç»“æž„ï¼šåªåš Windowsã€åªç”¨ `WSAPoll`ã€çº¦ 4100 è¡Œã€æ— ç¬¬ä¸‰æ–¹ä¾èµ–ï¼Œ
-æ–‡ä»¶åå’Œç±»åž‹åä¸Ž Asio å¯¹é½ï¼Œå¯ä»¥å·¦å³å¯¹ç…§ç€è¯»ã€‚C++ åå­—ç©ºé—´ä¸Ž CMake target éƒ½æ˜¯ `sasio`ã€‚
+asio-simplified 保留模型、去掉机械结构：只做 Windows、只用 `WSAPoll`、约 4200 行、无第三方依赖，
+文件名和类型名与 Asio 对齐，可以左右对照着读。C++ 名字空间与 CMake target 都是 `sasio`。
 
-## å†…å®¹
+## 内容
 
-| ç«  | æ–°å¢žå†…å®¹ | Asio å¯¹ç…§ |
+| 章 | 新增内容 | Asio 对照 |
 | --- | --- | --- |
-| 1 | `execution_context`ã€`io_context`ã€`scheduler`ã€`reactor`ã€`timer_queue`ã€`steady_timer` | `detail/scheduler`ã€`detail/select_reactor`ã€`detail/timer_queue` |
-| 2 | `buffer`ã€`detail/socket_ops`ã€`ip/tcp`ï¼ˆ`socket`ã€`acceptor`ï¼‰ | `basic_socket*`ã€`detail/socket_ops` |
-| 3 | `strand`ï¼ˆhandler ä¸²è¡ŒåŒ–ï¼‰ | `strand`ã€`detail/strand_service` |
-| 4 | ç»„åˆæ“ä½œ `async_read` / `async_write` | `read.hpp`ã€`write.hpp`ã€`detail/read_op` |
-| 5 | `ip/udp`ã€`ip/resolver` | `ip/udp.hpp`ã€`ip/basic_resolver.hpp` |
-| 6 | C++20 `awaitable`ã€`co_spawn` | `awaitable.hpp`ã€`co_spawn.hpp`ã€`use_awaitable` |
+| 1 | `execution_context`、`io_context`、`scheduler`、`reactor`、`timer_queue`、`steady_timer` | `detail/scheduler`、`detail/select_reactor`、`detail/timer_queue` |
+| 2 | `buffer`、`detail/socket_ops`、`ip/tcp`（`socket`、`acceptor`） | `basic_socket*`、`detail/socket_ops` |
+| 3 | `strand`（handler 串行化） | `strand`、`detail/strand_service` |
+| 4 | 组合操作 `async_read` / `async_write` | `read.hpp`、`write.hpp`、`detail/read_op` |
+| 5 | `ip/udp`、`ip/resolver` | `ip/udp.hpp`、`ip/basic_resolver.hpp` |
+| 6 | C++20 `awaitable`、`co_spawn` | `awaitable.hpp`、`co_spawn.hpp`、`use_awaitable` |
 
-## æ ¸å¿ƒæ€æƒ³
+## 核心思想
 
-- **`io_context` æ˜¯ä¸€ä¸ªæœåŠ¡å®¹å™¨ã€‚** è°ƒåº¦å™¨ã€reactorã€å®šæ—¶å™¨é˜Ÿåˆ—ã€strand å’Œ socket æœåŠ¡éƒ½ä½åœ¨
-  `execution_context` é‡Œï¼ŒæŒ‰éœ€åˆ›å»ºã€‚
-- **I/O å®Œæˆèµ°é˜Ÿåˆ—ï¼›åˆ°æœŸå®šæ—¶å™¨ç”± run å¾ªçŽ¯ç›´æŽ¥è°ƒç”¨ã€‚** `post()` åªå…¥é˜Ÿï¼Œ`run()` æ‰æŽ’ç©ºã€‚æ¯ä¸ªå…¥é˜Ÿ
-  handler å ä¸€ä¸ª work å•ä½ï¼Œè®¡æ•°ä¸Žä¸‰ç±»å¾…åŠžï¼ˆé˜Ÿåˆ—ã€å®šæ—¶å™¨ã€æè¿°ç¬¦ï¼‰å…¨ç©ºæ—¶ context æ‰åœæ­¢ï¼Œæ‰€ä»¥
-  å†æ¬¡ `run()` ä¹‹å‰å¿…é¡» `restart()`ã€‚
-- **reactor æŠŠå°±ç»ªä¼ªè£…æˆå®Œæˆã€‚** `WSAPoll` æŠ¥å‘Šå°±ç»ªåŽï¼Œsocket æ“ä½œæ‰æ‰§è¡Œ
-  `recv`/`send`/`accept`/`connect` å¹¶æŠ•é€’å®Œæˆ handlerã€‚poll é›†åˆæ˜¯å¿«ç…§ï¼Œæ‰€ä»¥æ–°çš„å…´è¶£å’Œæ›´æ—©çš„
-  å®šæ—¶å™¨å¿…é¡»æ‰“æ–­ç­‰å¾…â€”â€”å¦åˆ™å¦ä¸€ä¸ªçº¿ç¨‹å‘èµ·çš„æ“ä½œä¼šä¸€ç›´ç¡åˆ°ä¸‹ä¸€æ¬¡ `post`ã€‚
-- **æ¯ä¸ªæ–¹å‘ä¸€ä¸ªæœªå®Œæˆæ“ä½œã€‚** socket åªæœ‰ä¸€ä¸ªè¯»æ§½å’Œä¸€ä¸ªå†™æ§½ï¼›åŒæ–¹å‘å†å‘èµ·ä¼šå¾—åˆ°
-  `already_started`ã€‚
-- **strandã€ç»„åˆæ“ä½œã€åç¨‹ã€‚** strand æ˜¯é˜Ÿåˆ—åŠ è¿è¡Œæ ‡å¿—ï¼›ç»„åˆæ“ä½œæ˜¯ç”¨ `shared_ptr` çŠ¶æ€ä¸²èµ·å¤šæ¬¡
-  `*_some` çš„çŠ¶æ€æœºï¼›`awaitable` é€šè¿‡ symmetric transfer æ¢å¤ç­‰å¾…å®ƒçš„åç¨‹ã€‚
+- **`io_context` 是一个服务容器。** 调度器、reactor、定时器队列、strand 和 socket 服务都住在
+  `execution_context` 里，按需创建。
+- **I/O 完成走队列；到期定时器由 run 循环直接调用。** `post()` 只入队，`run()` 才排空。每个入队
+  handler 占一个 work 单位，计数与三类待办（队列、定时器、描述符）全空时 context 才停止，所以
+  再次 `run()` 之前必须 `restart()`。
+- **reactor 把就绪伪装成完成。** `WSAPoll` 报告就绪后，socket 操作才执行
+  `recv`/`send`/`accept`/`connect` 并投递完成 handler。poll 集合是快照，所以新的兴趣和更早的
+  定时器必须打断等待——否则另一个线程发起的操作会一直睡到下一次 `post`。
+- **每个方向一个未完成操作。** socket 只有一个读槽和一个写槽；同方向再发起会得到
+  `already_started`。
+- **strand、组合操作、协程。** strand 是队列加运行标志；组合操作是用 `shared_ptr` 状态串起多次
+  `*_some` 的状态机；`awaitable` 通过 symmetric transfer 恢复等待它的协程。
 
-## æž„å»ºä¸Žæµ‹è¯•
+## 构建与测试
 
-éœ€è¦ Windowsã€MSVCï¼ˆæˆ–ä»»æ„ C++17 ç¼–è¯‘å™¨ï¼‰ã€CMake 3.20+ å’Œ Ninjaã€‚åç¨‹æµ‹è¯•æŒ‰ C++20 ç¼–è¯‘ï¼Œ
-åº“æœ¬èº«æ˜¯ C++17ã€‚
+需要 Windows、MSVC（或任意 C++17 编译器）、CMake 3.20+ 和 Ninja。协程测试按 C++20 编译，
+库本身是 C++17。
 
 ```bat
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
@@ -59,7 +61,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-ç¤ºä¾‹ï¼š
+示例：
 
 ```bat
 build\ex01_post.exe
@@ -68,40 +70,40 @@ build\ex03_echo_server.exe 5555
 build\ex04_bind_executor.exe
 ```
 
-## æµ‹è¯•
+## 测试
 
-å…± 9 ä¸ªæµ‹è¯•å¯æ‰§è¡Œæ–‡ä»¶ã€‚å‡¡æ˜¯ Asio æœ‰åˆé€‚å•æµ‹çš„ï¼Œéƒ½ä»Žå®ƒè£å‰ªè€Œæ¥å¹¶ä¿ç•™åŽŸå§‹ç‰ˆæƒå¤´ï¼š`io_context`ã€
-`deadline_timer`ï¼ˆæ”¹ä¸º `steady_timer`ï¼‰ã€`strand`ã€`read`ã€`write`ï¼Œä»¥åŠ `ip/tcp` çš„ `no_delay` éƒ¨åˆ†ã€‚
-Asio æ²¡æœ‰é’ˆå¯¹åŽŸå§‹ socket I/Oã€UDP å’Œåç¨‹çš„è¿è¡Œæ—¶å•æµ‹ï¼Œè¿™äº›ç”¨ä¾‹æ”¹ç”±å…¶ç¤ºä¾‹å’Œæ–‡æ¡£è¡Œä¸ºæž„é€ ï¼Œå¹¶åœ¨
-æ–‡ä»¶å¤´æ³¨æ˜Žã€‚ä¸é€‚é…ç®€åŒ– API çš„éƒ¨åˆ†éƒ½æ ‡äº† `OMITTED`ã€‚
+共 9 个测试可执行文件。凡是 Asio 有合适单测的，都从它裁剪而来并保留原始版权头：`io_context`、
+`deadline_timer`（改为 `steady_timer`）、`strand`、`read`、`write`，以及 `ip/tcp` 的 `no_delay` 部分。
+Asio 没有针对原始 socket I/O、UDP 和协程的运行时单测，这些用例改由其示例和文档行为构造，并在
+文件头注明。不适配简化 API 的部分都标了 `OMITTED`。
 
-Debug CRT æ–­è¨€è¢«æ”¹æˆç«‹å³å¤±è´¥ï¼ŒåæŽ‰çš„ä¸å˜é‡ä¸å¯èƒ½é ç‚¹ä¸€æ¬¡â€œIgnoreâ€ç»§ç»­è·‘å®Œè¿˜æŠ¥å‘ŠæˆåŠŸã€‚
+Debug CRT 断言被改成立即失败，坏掉的不变量不可能靠点一次“Ignore”继续跑完还报告成功。
 
-## æœ‰æ„çš„é™åˆ¶
+## 有意的限制
 
-- åªæ”¯æŒ Windows + `WSAPoll`ï¼›æ²¡æœ‰ IOCP åŽç«¯ï¼ˆå¯é€‰é™„å½•æœªå®žçŽ°ï¼‰ã€‚
-- åªæ”¯æŒ IPv4 çš„ TCP ä¸Ž UDPï¼›æ²¡æœ‰ IPv6ã€SSLã€æœ¬åœ°å¥—æŽ¥å­—å’Œä¸²å£ã€‚
-- æ²¡æœ‰ executor æ¡†æž¶ã€completion tokenã€`any_io_executor`ã€‚
-- æ¯ä¸ªæ–¹å‘ä¸€ä¸ªæœªå®Œæˆæ“ä½œï¼Œæ¯ä¸ªæ“ä½œä¸€ä¸ª bufferï¼Œæ²¡æœ‰ buffer åºåˆ—ã€‚
-- UDP æ•°æ®æŠ¥æˆªæ–­ä»¥é”™è¯¯æŠ•é€’ï¼›Asio åžæŽ‰ `WSAEMSGSIZE` ä»¥å¯¹é½ POSIX è¯­ä¹‰ã€‚
-- resolver æ¯æ¬¡æŸ¥è¯¢èµ·ä¸€ä¸ªçŸ­å‘½çº¿ç¨‹ï¼›`io_context` å¿…é¡»æ¯”æœªå®Œæˆçš„æŸ¥è¯¢æ´»å¾—ä¹…ã€‚
-- å¯¹è±¡ä¸æ˜¯çº¿ç¨‹å®‰å…¨çš„ï¼šä¸è¦åœ¨å¦ä¸€ä¸ªçº¿ç¨‹ `close()` æ­£åœ¨ç­‰å¾…çš„ socketã€‚
-- ä¸æ˜¯ Asio çš„ drop-in æ›¿ä»£å“ï¼Œä¹Ÿä¸é¢å‘ç”Ÿäº§çŽ¯å¢ƒã€‚
+- 只支持 Windows + `WSAPoll`；没有 IOCP 后端（可选附录未实现）。
+- 只支持 IPv4 的 TCP 与 UDP；没有 IPv6、SSL、本地套接字和串口。
+- 没有 executor 框架、completion token、`any_io_executor`。
+- 每个方向一个未完成操作，每个操作一个 buffer，没有 buffer 序列。
+- UDP 数据报截断以错误投递；Asio 吞掉 `WSAEMSGSIZE` 以对齐 POSIX 语义。
+- resolver 每次查询起一个短命线程；`io_context` 必须比未完成的查询活得久。
+- 对象不是线程安全的：不要在另一个线程 `close()` 正在等待的 socket。
+- 不是 Asio 的 drop-in 替代品，也不面向生产环境。
 
-executor å…³è”ä¸Ž completion token æ˜¯åˆ»æ„çœç•¥çš„ã€‚[Executor ä¸Ž completion token](docs/zh/executor-and-tokens.md)
-è§£é‡Šå®ƒä»¬è§£å†³ä»€ä¹ˆé—®é¢˜ã€ç¼ºäº†å®ƒä»¬çš„ä»£ä»·ï¼Œä»¥åŠ `examples/ex04_bind_executor.cpp` å¦‚ä½•ç”¨ `strand` æ‰‹å·¥è¿‘ä¼¼
-`bind_executor`ã€‚
+executor 关联与 completion token 是刻意省略的。[Executor 与 completion token](docs/zh/executor-and-tokens.md)
+解释它们解决什么问题、缺了它们的代价，以及 `examples/ex04_bind_executor.cpp` 如何用 `strand` 手工近似
+`bind_executor`。
 
-## é˜…è¯»é¡ºåº
+## 阅读顺序
 
-1. `include/sasio/execution_context.hpp`â€”â€”`io_context` ä¸ºä»€ä¹ˆè¿™ä¹ˆè–„ã€‚
-2. `src/scheduler.cpp` çš„ `run_one_impl()`â€”â€”é˜Ÿåˆ—/work/è¶…æ—¶å¾ªçŽ¯ã€‚
-3. `src/reactor.cpp`â€”â€”`WSAPoll`ã€æè¿°ç¬¦è¡¨å’Œ interrupterã€‚
-4. `src/timer_queue.cpp`ã€`src/steady_timer.cpp`â€”â€”å †ä¸Žå”¤é†’è§„åˆ™ã€‚
-5. `include/sasio/ip/tcp.hpp`ã€`src/ip_tcp.cpp`â€”â€”å‘èµ·ã€æ³¨å†Œã€å®Œæˆã€‚
-6. `src/strand.cpp`ã€`include/sasio/read.hpp`ã€`include/sasio/awaitable.hpp`â€”â€”ä¸²è¡ŒåŒ–ã€ç»„åˆä¸Žåç¨‹ã€‚
+1. `include/sasio/execution_context.hpp`——`io_context` 为什么这么薄。
+2. `src/scheduler.cpp` 的 `run_one_impl()`——队列/work/超时循环。
+3. `src/reactor.cpp`——`WSAPoll`、描述符表和 interrupter。
+4. `src/timer_queue.cpp`、`src/steady_timer.cpp`——堆与唤醒规则。
+5. `include/sasio/ip/tcp.hpp`、`src/ip_tcp.cpp`——发起、注册、完成。
+6. `src/strand.cpp`、`include/sasio/read.hpp`、`include/sasio/awaitable.hpp`——串行化、组合与协程。
 
-## è®¸å¯ä¸Žå½’å±ž
+## 许可与归属
 
-ä»¥ [Boost Software License 1.0](LICENSE_1_0.txt) åˆ†å‘ã€‚æ”¹ç¼–è‡ª Asio çš„æµ‹è¯•ææ–™ç‰ˆæƒå½’
-Christopher M. Kohlhoffï¼ˆ2003-2026ï¼‰ï¼ŒæŒ‰åŒä¸€è®¸å¯ä½¿ç”¨ï¼›è¯¦è§ [NOTICE](NOTICE)ã€‚
+以 [Boost Software License 1.0](LICENSE_1_0.txt) 分发。改编自 Asio 的测试材料版权归
+Christopher M. Kohlhoff（2003-2026），按同一许可使用；详见 [NOTICE](NOTICE)。
